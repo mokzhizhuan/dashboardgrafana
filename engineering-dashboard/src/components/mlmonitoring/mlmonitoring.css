@@ -1,0 +1,1142 @@
+.ml-monitor-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.ml-monitor-header-card,
+.ml-monitor-card,
+.monitoring-chart-grid > * {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 18px;
+}
+
+.ml-monitor-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.ml-monitor-header-text {
+  min-width: 0;
+}
+
+.ml-monitor-title {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  line-height: 1.2;
+}
+
+.ml-monitor-subtitle {
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  max-width: 760px;
+}
+
+.ml-monitor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ml-back-button {
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  color: var(--text-strong);
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.ml-back-button:hover {
+  background: var(--primary-soft);
+  border-color: #93c5fd;
+}
+
+.ml-monitor-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ml-monitor-toggle input {
+  width: 16px;
+  height: 16px;
+}
+
+.ml-monitor-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.ml-monitor-main-grid,
+.ml-monitor-bottom-grid,
+.ml-monitor-final-grid,
+.monitoring-chart-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 18px;
+}
+
+.ml-monitor-stat {
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  min-height: 108px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.ml-monitor-stat-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #5e7290;
+}
+
+.ml-monitor-stat-value {
+  margin-top: 10px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+.ml-monitor-stat-helper {
+  margin-top: 8px;
+  font-size: 0.84rem;
+  color: #72839c;
+}
+
+.ml-monitor-stat.normal {
+  border-color: #cfe7d7;
+  background: linear-gradient(180deg, #ffffff 0%, #f2fbf5 100%);
+}
+
+.ml-monitor-stat.warning {
+  border-color: #f3cf87;
+  background: linear-gradient(180deg, #fffef8 0%, #fff9eb 100%);
+}
+
+.ml-monitor-stat.critical {
+  border-color: #f1bcbc;
+  background: linear-gradient(180deg, #ffffff 0%, #fff3f3 100%);
+}
+
+.status-pill,
+.ml-table-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  line-height: 1;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.status-pill.normal,
+.ml-table-badge.normal {
+  background: #e9f7ee;
+  color: #216e39;
+}
+
+.status-pill.warning,
+.ml-table-badge.warning {
+  background: #fff3d8;
+  color: #9b5d00;
+}
+
+.status-pill.critical,
+.ml-table-badge.critical {
+  background: #ffe2e2;
+  color: #b42318;
+}
+
+.ml-monitor-card-title {
+  margin: 0;
+  font-size: 1.14rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  line-height: 1.3;
+}
+
+.ml-monitor-card-subtitle {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.ml-monitor-card canvas,
+.ml-monitor-card .recharts-responsive-container,
+.monitoring-chart-grid .recharts-responsive-container,
+.monitoring-chart-grid canvas {
+  margin-top: 12px;
+}
+
+.monitoring-chart-grid .ml-monitor-card-title,
+.monitoring-chart-grid h3 {
+  font-size: 1.08rem;
+}
+
+.monitoring-chart-grid .ml-monitor-card-subtitle,
+.monitoring-chart-grid p {
+  font-size: 0.88rem;
+}
+
+/* Machine Health */
+
+.ml-health-layout {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 30px;
+  align-items: center;
+  margin-top: 18px;
+}
+
+.ml-health-gauge {
+  --gauge-fill: #7cc190;
+  --gauge-track: #e6edf4;
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ml-health-gauge.warning {
+  --gauge-fill: #f2b84b;
+}
+
+.ml-health-gauge.critical {
+  --gauge-fill: #ea6a6a;
+}
+
+.ml-health-gauge-inner {
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ml-health-score {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--text-strong);
+  line-height: 1;
+}
+
+.ml-health-score-label {
+  margin-top: 6px;
+  font-size: 0.74rem;
+  color: var(--text-soft);
+}
+
+.ml-health-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ml-health-pill-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.ml-health-fault {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  line-height: 1.2;
+}
+
+.ml-health-confidence {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #6f84a3;
+}
+
+.ml-health-note {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.6;
+  max-width: 360px;
+  font-size: 0.93rem;
+}
+
+/* Current Prediction */
+
+.ml-current-prediction {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.ml-current-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ml-current-row.column {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.ml-current-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ml-current-confidence-text {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.ml-current-recommendation {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--panel-soft);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.confidence-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #e7edf4;
+  overflow: hidden;
+}
+
+.confidence-bar.large {
+  height: 12px;
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #67b981 0%, #3f8de4 100%);
+}
+
+/* Tables */
+
+.ml-monitor-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  margin-top: 14px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.data-table th {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f6f9fd;
+}
+
+.data-table td {
+  white-space: nowrap;
+}
+
+.data-table td:nth-child(3),
+.data-table td:nth-child(4),
+.data-table td:nth-child(5),
+.ml-number-cell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.data-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+/* Alert Panel */
+
+.ml-alert-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.ml-alert-stat {
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.ml-alert-stat-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5e7290;
+}
+
+.ml-alert-stat-value {
+  margin-top: 8px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.ml-alert-message-card {
+  grid-column: 1 / -1;
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.ml-alert-message-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5e7290;
+  margin-bottom: 6px;
+}
+
+.ml-alert-message-text {
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Drift Monitor */
+.ml-drift-card {
+  min-height: 0;
+  height: auto;
+  overflow: visible;
+}
+
+.ml-drift-subtitle {
+  margin-bottom: 0;
+}
+
+.ml-drift-body.compact {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ml-drift-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-soft);
+}
+
+.ml-drift-row-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5e7290;
+}
+
+.ml-drift-row-value {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Helpers */
+
+.ml-monitor-empty {
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px dashed var(--border);
+  background: var(--panel-soft);
+  color: var(--text-soft);
+}
+
+.loading-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #d6dfeb;
+  border-top-color: var(--primary);
+  border-radius: 999px;
+  animation: mlSpin 0.8s linear infinite;
+}
+
+@keyframes mlSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-error {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Responsive */
+
+@media (max-width: 1180px) {
+  .ml-monitor-main-grid,
+  .ml-monitor-bottom-grid,
+  .ml-monitor-final-grid,
+  .monitoring-chart-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ml-monitor-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .ml-monitor-shell {
+    gap: 14px;
+  }
+
+  .ml-monitor-header-card,
+  .ml-monitor-card,
+  .monitoring-chart-grid > * {
+    padding: 14px;
+  }
+
+  .ml-monitor-header-row,
+  .ml-current-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ml-monitor-header-actions {
+    width: 100%;
+  }
+
+  .ml-monitor-header-actions > * {
+    width: 100%;
+  }
+
+  .ml-monitor-title {
+    font-size: 1.35rem;
+  }
+
+  .ml-monitor-subtitle {
+    margin-top: 6px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  .ml-monitor-card-title {
+    font-size: 1.02rem;
+  }
+
+  .ml-monitor-card-subtitle {
+    margin: 4px 0 0;
+    font-size: 0.84rem;
+    line-height: 1.4;
+  }
+
+  .ml-monitor-summary-grid,
+  .ml-monitor-main-grid,
+  .ml-monitor-bottom-grid,
+  .ml-monitor-final-grid,
+  .monitoring-chart-grid,
+  .ml-alert-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .ml-monitor-bottom-grid,
+  .ml-monitor-final-grid {
+    align-items: start;
+  }
+
+  .ml-monitor-bottom-grid > *,
+  .ml-monitor-final-grid > * {
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+    align-self: start;
+  }
+
+  .ml-monitor-stat {
+    padding: 14px;
+    min-height: 96px;
+  }
+
+  .ml-monitor-stat-value {
+    margin-top: 8px;
+    font-size: 1.28rem;
+    line-height: 1.15;
+  }
+
+  .ml-monitor-stat-helper {
+    margin-top: 6px;
+    font-size: 0.8rem;
+  }
+
+  .ml-health-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 14px;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .ml-health-details {
+    align-items: center;
+  }
+
+  .ml-health-pill-row {
+    justify-content: center;
+  }
+
+  .ml-health-gauge {
+    width: 128px;
+    height: 128px;
+  }
+
+  .ml-health-gauge-inner {
+    width: 94px;
+    height: 94px;
+  }
+
+  .ml-health-score {
+    font-size: 32px;
+  }
+
+  .ml-health-fault {
+    font-size: 1.15rem;
+    max-width: none;
+  }
+
+  .ml-health-confidence {
+    font-size: 0.95rem;
+  }
+
+  .ml-health-note {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    max-width: none;
+  }
+
+  .ml-current-prediction {
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .ml-current-row {
+    gap: 8px;
+  }
+
+  .ml-current-confidence-text {
+    font-size: 0.95rem;
+  }
+
+  .ml-current-recommendation {
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .ml-alert-stat {
+    min-height: 84px;
+    padding: 12px 14px;
+  }
+
+  .ml-alert-stat-value {
+    font-size: 1.05rem;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .ml-alert-message-card {
+    padding: 12px 14px;
+  }
+
+  .ml-drift-card {
+    padding: 12px;
+  }
+
+  .ml-drift-subtitle {
+    font-size: 0.84rem;
+    line-height: 1.4;
+  }
+
+  .ml-drift-body.compact {
+    gap: 7px;
+    margin-top: 8px;
+  }
+
+  .ml-drift-row {
+    display: block;
+    padding: 8px 10px;
+  }
+
+  .ml-drift-row-label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  .ml-drift-row-value {
+    display: block;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    text-align: left;
+  }
+
+  .confidence-bar.large {
+    height: 8px;
+  }
+  
+  .ml-monitor-table-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    margin-top: 12px;
+  }
+
+  .data-table {
+    width: 100%;
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+  }
+
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .data-table tr {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-soft) 100%);
+    box-shadow: var(--shadow-soft);
+    padding: 4px 0;
+    overflow: hidden;
+  }
+
+  .data-table td {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: normal;
+    text-align: left;
+  }
+
+  .data-table td:last-child {
+    border-bottom: none;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: #5e7290;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .ml-table-badge {
+    justify-self: start;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  .ml-monitor-header-card,
+  .ml-monitor-card,
+  .monitoring-chart-grid > * {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .ml-monitor-title {
+    font-size: 1.2rem;
+  }
+
+  .ml-monitor-subtitle {
+    font-size: 0.84rem;
+  }
+
+  .ml-monitor-stat {
+    padding: 12px;
+  }
+
+  .ml-monitor-stat-value {
+    font-size: 1.18rem;
+  }
+
+  .status-pill,
+  .ml-table-badge {
+    font-size: 0.72rem;
+    min-height: 26px;
+    padding: 4px 8px;
+  }
+
+  .data-table td {
+    grid-template-columns: 104px minmax(0, 1fr);
+    padding: 10px;
+    font-size: 0.84rem;
+  }
+}
+/* Desktop ML monitoring polish */
+@media (min-width: 1024px) {
+  .ml-monitor-shell {
+    gap: 20px;
+  }
+
+  .ml-monitor-header-card,
+  .ml-monitor-card,
+  .monitoring-chart-grid > * {
+    padding: 20px;
+  }
+
+  .ml-monitor-title {
+    font-size: 1.95rem;
+    line-height: 1.15;
+  }
+
+  .ml-monitor-subtitle {
+    max-width: 980px;
+    font-size: 0.98rem;
+  }
+
+  .ml-monitor-card-title {
+    font-size: 1.18rem;
+  }
+
+  .ml-monitor-card-subtitle {
+    font-size: 0.92rem;
+  }
+
+  .ml-monitor-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .ml-monitor-main-grid,
+  .ml-monitor-bottom-grid,
+  .ml-monitor-final-grid,
+  .monitoring-chart-grid {
+    grid-template-columns: 1.15fr 1fr;
+    gap: 20px;
+  }
+
+  .ml-monitor-stat {
+    padding: 18px;
+    min-height: 116px;
+  }
+
+  .ml-monitor-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .ml-health-layout {
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 34px;
+  }
+
+  .ml-health-gauge {
+    width: 156px;
+    height: 156px;
+  }
+
+  .ml-health-gauge-inner {
+    width: 114px;
+    height: 114px;
+  }
+
+  .ml-health-score {
+    font-size: 36px;
+  }
+
+  .ml-health-fault {
+    font-size: 1.55rem;
+  }
+
+  .ml-current-prediction {
+    gap: 18px;
+  }
+
+  .ml-alert-grid {
+    gap: 16px;
+  }
+
+  .ml-alert-stat {
+    padding: 16px 18px;
+    min-height: 96px;
+  }
+
+  .ml-alert-stat-value {
+    font-size: 1.24rem;
+  }
+
+  .ml-drift-body.compact {
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .ml-drift-row {
+    padding: 10px 12px;
+  }
+
+  .ml-drift-row-value {
+    font-size: 1rem;
+  }
+
+  .ml-monitor-table-wrap {
+    margin-top: 16px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 15px 14px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .ml-monitor-shell {
+    gap: 22px;
+  }
+
+  .ml-monitor-header-card,
+  .ml-monitor-card,
+  .monitoring-chart-grid > * {
+    padding: 22px;
+  }
+
+  .ml-monitor-title {
+    font-size: 2.1rem;
+  }
+
+  .ml-monitor-subtitle {
+    max-width: 1100px;
+    font-size: 1rem;
+  }
+
+  .ml-monitor-summary-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .ml-monitor-main-grid,
+  .ml-monitor-bottom-grid,
+  .ml-monitor-final-grid,
+  .monitoring-chart-grid {
+    gap: 22px;
+  }
+
+  .ml-monitor-stat {
+    padding: 20px;
+    min-height: 120px;
+  }
+
+  .ml-monitor-stat-value {
+    font-size: 1.6rem;
+  }
+
+  .ml-health-layout {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 38px;
+  }
+
+  .ml-health-gauge {
+    width: 164px;
+    height: 164px;
+  }
+
+  .ml-health-gauge-inner {
+    width: 118px;
+    height: 118px;
+  }
+
+  .ml-health-score {
+    font-size: 38px;
+  }
+
+  .ml-health-fault {
+    font-size: 1.65rem;
+  }
+
+  .ml-alert-stat {
+    padding: 18px 20px;
+    min-height: 100px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 16px 16px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .ml-monitor-header-card,
+  .ml-monitor-card,
+  .monitoring-chart-grid > * {
+    padding: 24px;
+  }
+
+  .ml-monitor-title {
+    font-size: 2.25rem;
+  }
+
+  .ml-monitor-summary-grid {
+    gap: 18px;
+  }
+
+  .ml-monitor-main-grid,
+  .ml-monitor-bottom-grid,
+  .ml-monitor-final-grid,
+  .monitoring-chart-grid {
+    gap: 24px;
+  }
+
+  .ml-monitor-stat {
+    padding: 22px;
+    min-height: 126px;
+  }
+
+  .ml-monitor-stat-value {
+    font-size: 1.7rem;
+  }
+
+  .ml-health-fault {
+    font-size: 1.75rem;
+  }
+}
+@media (min-width: 1280px) {
+  .ml-monitor-header-row {
+    gap: 20px;
+  }
+
+  .ml-monitor-header-text {
+    max-width: 1100px;
+  }
+
+  .ml-monitor-summary-grid {
+    align-items: stretch;
+  }
+
+  .ml-monitor-main-grid,
+  .ml-monitor-bottom-grid,
+  .ml-monitor-final-grid,
+  .monitoring-chart-grid {
+    align-items: stretch;
+  }
+
+  .ml-monitor-card,
+  .monitoring-chart-grid > * {
+    min-height: 100%;
+  }
+
+  .ml-monitor-card canvas,
+  .ml-monitor-card .recharts-responsive-container,
+  .monitoring-chart-grid .recharts-responsive-container,
+  .monitoring-chart-grid canvas {
+    margin-top: 14px;
+  }
+
+  .ml-health-note {
+    max-width: 520px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .ml-monitor-header-text {
+    max-width: 1180px;
+  }
+
+  .ml-monitor-card-title {
+    font-size: 1.22rem;
+  }
+
+  .ml-monitor-card-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .ml-health-note {
+    max-width: 580px;
+  }
+}

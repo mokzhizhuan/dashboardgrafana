@@ -1,0 +1,23 @@
+.env
+node_modules/
+dist/
+build/
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.zip
+*.sqlite
+*.db
+*.spec
+
+*.exe
+Engineering Dashboard Launcher.exe
+
+grafana/provisioning/datasources/data/
+backend/prometheus/prometheus.exe
+backend/prometheus/data/
+backend/grafana/data/
+prometheus/data/
+grafana/data/backend/prometheus/prometheus.exe

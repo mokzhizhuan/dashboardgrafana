@@ -1,0 +1,23 @@
+\connect engineering_dashboard;
+
+CREATE TABLE IF NOT EXISTS telemetry (
+  id SERIAL PRIMARY KEY,
+  time TIMESTAMP NOT NULL DEFAULT NOW(),
+  device_name VARCHAR(100) NOT NULL,
+  temperature DOUBLE PRECISION,
+  humidity DOUBLE PRECISION
+);
+
+CREATE TABLE IF NOT EXISTS sensor_raw (
+  id SERIAL PRIMARY KEY,
+  ts TIMESTAMP NOT NULL,
+  sensor_name VARCHAR(100) NOT NULL,
+  value DOUBLE PRECISION NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sensor_fft (
+  id SERIAL PRIMARY KEY,
+  sensor_name VARCHAR(100) NOT NULL,
+  frequency_hz DOUBLE PRECISION NOT NULL,
+  amplitude DOUBLE PRECISION NOT NULL
+);
