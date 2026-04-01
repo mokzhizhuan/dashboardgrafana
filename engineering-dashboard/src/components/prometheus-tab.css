@@ -697,3 +697,134 @@
     border-radius: 16px;
   }
 }
+.prometheus-tab__debug-panel {
+  margin-top: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e5edf5;
+  border-radius: 14px;
+}
+
+.prometheus-tab__debug-panel-title {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.prometheus-tab__debug-panel-subtitle {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #64748b;
+}
+.prometheus-tab__section--debug .prometheus-tab__grid {
+  margin-bottom: 16px;
+}
+.prometheus-tab__debug-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.prometheus-tab__debug-meta {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+
+.prometheus-tab__debug-empty {
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.prometheus-tab__pre--metrics {
+  max-height: 260px;
+}
+
+.prometheus-tab__debug-panel {
+  margin-top: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e5edf5;
+  border-radius: 14px;
+}
+
+.prometheus-tab__debug-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.prometheus-tab__debug-panel-title {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.prometheus-tab__debug-panel-subtitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.prometheus-tab__debug-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prometheus-tab__select {
+  min-width: 180px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+
+.prometheus-tab__chart-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.prometheus-tab__chart-shell {
+  height: 260px;
+  padding: 8px 4px 0;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.prometheus-tab__debug-empty {
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}

@@ -15,7 +15,6 @@ function buildUrl(path: string) {
 
 function handleUnauthorized() {
   clearAuth();
-  window.location.reload();
 }
 
 async function ensureOk(res: Response) {

@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from "react";
-import "./prometheus-tab.css"
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
+import "./prometheus-tab.css";
 
 type BadgeInfo = {
   text: string;
@@ -79,6 +88,19 @@ type InfoCardItem = {
   cardClassName?: string;
 };
 
+type MetricPreviewPoint = {
+  timestamp: number;
+  value: number;
+};
+
+type MetricPreviewResponse = {
+  metric: string;
+  points: MetricPreviewPoint[];
+  error?: string;
+};
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+
 function formatUnavailableText(value?: string | null): string {
   if (value == null || value.trim() === "") return "Unavailable";
   return value;
@@ -120,6 +142,24 @@ function formatEpochSeconds(seconds?: number): string {
   return date.toLocaleString();
 }
 
+function formatLastRefreshText(value?: string, hasSummary?: boolean): string {
+  if (!value || !value.trim()) {
+    return hasSummary ? "Loaded, timestamp unavailable" : "Not refreshed yet";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+
+  return parsed.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
 function yesNoUnavailable(value?: boolean): string {
   if (value === true) return "Yes";
   if (value === false) return "No";
@@ -128,30 +168,15 @@ function yesNoUnavailable(value?: boolean): string {
 
 function getFreshnessBadge(seconds?: number): BadgeInfo {
   if (seconds == null || Number.isNaN(seconds)) {
-    return {
-      text: "Unavailable",
-      className: "prometheus-tab__badge--neutral",
-    };
+    return { text: "Unavailable", className: "prometheus-tab__badge--neutral" };
   }
-
   if (seconds <= 300) {
-    return {
-      text: "Fresh",
-      className: "prometheus-tab__badge--ok",
-    };
+    return { text: "Fresh", className: "prometheus-tab__badge--ok" };
   }
-
   if (seconds <= 1800) {
-    return {
-      text: "Warning",
-      className: "prometheus-tab__badge--warn",
-    };
+    return { text: "Warning", className: "prometheus-tab__badge--warn" };
   }
-
-  return {
-    text: "Stale",
-    className: "prometheus-tab__badge--danger",
-  };
+  return { text: "Stale", className: "prometheus-tab__badge--danger" };
 }
 
 function getFreshnessValueClass(seconds?: number): string {
@@ -162,93 +187,72 @@ function getFreshnessValueClass(seconds?: number): string {
 }
 
 function getFreshnessSummaryText(seconds?: number): string {
-  if (seconds == null || Number.isNaN(seconds)) {
-    return "Unavailable";
-  }
-  if (seconds <= 300) {
-    return "Fresh";
-  }
-  if (seconds <= 1800) {
-    return "Warning";
-  }
+  if (seconds == null || Number.isNaN(seconds)) return "Unavailable";
+  if (seconds <= 300) return "Fresh";
+  if (seconds <= 1800) return "Warning";
   return "Stale";
 }
 
 function getAppHealthBadge(value?: boolean): BadgeInfo {
   if (value === true) {
-    return {
-      text: "Healthy",
-      className: "prometheus-tab__badge--ok",
-    };
+    return { text: "Healthy", className: "prometheus-tab__badge--ok" };
   }
-
   if (value === false) {
-    return {
-      text: "Down",
-      className: "prometheus-tab__badge--danger",
-    };
+    return { text: "Down", className: "prometheus-tab__badge--danger" };
   }
-
-  return {
-    text: "Unavailable",
-    className: "prometheus-tab__badge--neutral",
-  };
+  return { text: "Unavailable", className: "prometheus-tab__badge--neutral" };
 }
 
 function getEnabledBadge(value?: boolean): BadgeInfo {
   if (value === true) {
-    return {
-      text: "Enabled",
-      className: "prometheus-tab__badge--ok",
-    };
+    return { text: "Enabled", className: "prometheus-tab__badge--ok" };
   }
-
   if (value === false) {
-    return {
-      text: "Disabled",
-      className: "prometheus-tab__badge--danger",
-    };
+    return { text: "Disabled", className: "prometheus-tab__badge--danger" };
   }
-
-  return {
-    text: "Unavailable",
-    className: "prometheus-tab__badge--neutral",
-  };
+  return { text: "Unavailable", className: "prometheus-tab__badge--neutral" };
 }
 
 function getRunningBadge(value?: boolean): BadgeInfo {
   if (value === true) {
-    return {
-      text: "Running",
-      className: "prometheus-tab__badge--ok",
-    };
+    return { text: "Running", className: "prometheus-tab__badge--ok" };
   }
-
   if (value === false) {
-    return {
-      text: "Stopped",
-      className: "prometheus-tab__badge--danger",
-    };
+    return { text: "Stopped", className: "prometheus-tab__badge--danger" };
   }
-
-  return {
-    text: "Unavailable",
-    className: "prometheus-tab__badge--neutral",
-  };
+  return { text: "Unavailable", className: "prometheus-tab__badge--neutral" };
 }
 
 function getEndpointBadge(summary: PrometheusSummary | null): BadgeInfo {
   if (summary) {
-    return {
-      text: "Healthy",
-      className: "prometheus-tab__badge--ok",
-    };
+    return { text: "Healthy", className: "prometheus-tab__badge--ok" };
+  }
+  return { text: "Unavailable", className: "prometheus-tab__badge--neutral" };
+}
+
+async function fetchMetricPreview(
+  metric: string,
+  minutes = 30,
+): Promise<MetricPreviewResponse> {
+  const url = `${API_BASE_URL}/prometheus/metric-preview?metric=${encodeURIComponent(metric)}&minutes=${minutes}`;
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  const rawText = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Metric preview request failed: ${response.status}`);
   }
 
-  return {
-    text: "Unavailable",
-    className: "prometheus-tab__badge--neutral",
-  };
+  try {
+    return JSON.parse(rawText) as MetricPreviewResponse;
+  } catch {
+    throw new Error("Metric preview endpoint did not return JSON. Check VITE_API_BASE_URL or backend route.");
+  }
 }
 
 function StatusCard({
@@ -328,24 +332,20 @@ export default function PrometheusTab({
 }: Props) {
   const [copyFeedback, setCopyFeedback] = useState<"" | "Copied!" | "Copy failed">("");
   const [copyToast, setCopyToast] = useState<"" | "Scrape target copied">("");
+  const [selectedPreviewMetric, setSelectedPreviewMetric] = useState("scrape_duration_seconds");
+  const [metricPreview, setMetricPreview] = useState<MetricPreviewResponse | null>(null);
+  const [metricPreviewLoading, setMetricPreviewLoading] = useState(false);
+  const [metricPreviewError, setMetricPreviewError] = useState<string | null>(null);
 
   useEffect(() => {
     const timers: number[] = [];
 
     if (copyFeedback) {
-      timers.push(
-        window.setTimeout(() => {
-          setCopyFeedback("");
-        }, 1800)
-      );
+      timers.push(window.setTimeout(() => setCopyFeedback(""), 1800));
     }
 
     if (copyToast) {
-      timers.push(
-        window.setTimeout(() => {
-          setCopyToast("");
-        }, 2200)
-      );
+      timers.push(window.setTimeout(() => setCopyToast(""), 2200));
     }
 
     return () => {
@@ -353,10 +353,51 @@ export default function PrometheusTab({
     };
   }, [copyFeedback, copyToast]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadMetricPreview = async () => {
+      setMetricPreviewLoading(true);
+      setMetricPreviewError(null);
+
+      try {
+        const payload = await fetchMetricPreview(selectedPreviewMetric, 30);
+
+        if (!isActive) return;
+
+        if (payload.error) {
+          setMetricPreview(null);
+          setMetricPreviewError(payload.error);
+          return;
+        }
+
+        setMetricPreview(payload);
+      } catch (error) {
+        if (!isActive) return;
+
+        setMetricPreview(null);
+        setMetricPreviewError(
+          error instanceof Error ? error.message : "Failed to load metric preview.",
+        );
+      } finally {
+        if (isActive) {
+          setMetricPreviewLoading(false);
+        }
+      }
+    };
+
+    void loadMetricPreview();
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedPreviewMetric, lastUpdatedText]);
+
   const prometheusBaseUrl =
     summary?.prometheus?.base_url ||
     import.meta.env.VITE_PROMETHEUS_URL ||
     "Unavailable";
+  const displayScrapeTarget = summary?.app?.metrics_path || "/prometheus/metrics";
   const safeScrapeTarget =
     summary?.app?.metrics_path
       ? `${window.location.origin}${summary.app.metrics_path}`
@@ -496,6 +537,73 @@ export default function PrometheusTab({
           ? "Not found"
           : "Unavailable";
 
+  const metricChartData = useMemo(() => {
+    if (!metricPreview?.points?.length) return [];
+
+    return metricPreview.points
+      .filter(
+        (point) =>
+          typeof point?.timestamp === "number" &&
+          !Number.isNaN(point.timestamp) &&
+          typeof point?.value === "number" &&
+          !Number.isNaN(point.value),
+      )
+      .map((point) => ({
+        time: new Date(point.timestamp * 1000).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        value: point.value,
+      }));
+  }, [metricPreview]);
+
+  const selectedPreviewMetricLabel =
+    selectedPreviewMetric === "scrape_duration_seconds"
+      ? "Scrape Duration"
+      : selectedPreviewMetric === "scrape_samples"
+        ? "Scrape Samples"
+        : selectedPreviewMetric === "targets_up"
+          ? "Targets Up"
+          : selectedPreviewMetric;
+  const latestMetricPreviewTimestamp = useMemo(
+  () => getLatestMetricPreviewTimestamp(metricPreview),
+  [metricPreview],
+);
+
+const lastSummaryRefreshText = latestMetricPreviewTimestamp
+  ? formatDisplayDateTime(latestMetricPreviewTimestamp)
+  : formatDisplayDateTime(lastUpdatedText);
+  function formatDisplayDateTime(value?: string | number | null): string {
+  if (value == null || value === "") return "Not refreshed yet";
+
+  const date =
+    typeof value === "number" ? new Date(value * 1000) : new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Not refreshed yet";
+
+  return date.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function getLatestMetricPreviewTimestamp(
+  preview: MetricPreviewResponse | null,
+): number | null {
+  if (!preview?.points?.length) return null;
+
+  const validTimestamps = preview.points
+    .map((point) => point.timestamp)
+    .filter((ts) => typeof ts === "number" && !Number.isNaN(ts));
+
+  if (!validTimestamps.length) return null;
+
+  return Math.max(...validTimestamps);
+}
   const handleCopyScrapeTarget = async () => {
     try {
       await navigator.clipboard.writeText(safeScrapeTarget);
@@ -624,11 +732,6 @@ export default function PrometheusTab({
       label: "Database Failures",
       value: dbFailuresText,
     },
-    {
-      label: "Prometheus Scrape Target",
-      value: safeScrapeTarget,
-      mono: true,
-    },
   ];
 
   const scrapeHealthCards: InfoCardItem[] = [
@@ -645,12 +748,11 @@ export default function PrometheusTab({
     {
       label: "Job Found",
       value: prometheusJobFoundText,
-      subvalue:
-      summary?.prometheus?.last_error
+      subvalue: summary?.prometheus?.last_error
         ? `Last error: ${summary.prometheus.last_error}`
         : prometheusJobFoundText === "Healthy"
           ? "Prometheus job present in summary"
-          : "Job details unavailable from summary"
+          : "Job details unavailable from summary",
     },
     {
       label: "Prometheus Up",
@@ -693,6 +795,27 @@ export default function PrometheusTab({
     },
   ];
 
+  const summaryLoadedText = summary ? "Loaded" : "Unavailable";
+
+  const lastFetchCards: InfoCardItem[] = [
+    {
+      label: "Last Summary Refresh",
+      value: lastSummaryRefreshText,
+      subvalue: latestMetricPreviewTimestamp
+        ? "Latest timestamp from metric preview data"
+        : summary
+          ? "Latest Prometheus summary refresh timestamp"
+          : "Refresh the summary to load the first timestamp",
+    },
+    {
+      label: "Summary Status",
+      value: summaryLoadedText,
+      subvalue: summary
+        ? "Summary endpoint returned monitoring data"
+        : "Summary data is currently unavailable",
+    },
+  ];
+
   return (
     <section className="prometheus-tab">
       <section className="prometheus-tab__hero">
@@ -703,7 +826,9 @@ export default function PrometheusTab({
               Monitor internal FastAPI metrics, telemetry freshness, simulator activity, and
               Prometheus scrape health from one compact operational view.
             </p>
-            <div className="prometheus-tab__meta">Last updated: {lastUpdatedText}</div>
+            <div className="prometheus-tab__meta">
+              Last updated: {lastSummaryRefreshText}
+            </div>
           </div>
 
           <div className="prometheus-tab__actions">
@@ -773,27 +898,65 @@ export default function PrometheusTab({
       />
 
       <section className="prometheus-tab__section prometheus-tab__section--debug">
-        <h2 className="prometheus-tab__section-title">Debug</h2>
+        <h2 className="prometheus-tab__section-title">Troubleshooting</h2>
         <p className="prometheus-tab__section-subtitle">
-          Secondary troubleshooting details for raw summary inspection and metric preview.
+          Secondary monitoring details for fetch verification and metric inspection.
         </p>
 
-        <div className="prometheus-tab__debug">
-          <details className="prometheus-tab__details">
-            <summary>Summary Details JSON</summary>
-            <div className="prometheus-tab__details-content">
-              <pre className="prometheus-tab__pre">{rawSummaryText || "No summary data."}</pre>
-            </div>
-          </details>
+        <div className="prometheus-tab__grid">
+          {lastFetchCards.map((card) => (
+            <InfoCard key={card.label} {...card} />
+          ))}
+        </div>
 
-          <details className="prometheus-tab__details">
-            <summary>Filtered Metric Preview</summary>
-            <div className="prometheus-tab__details-content">
-              <pre className="prometheus-tab__pre">
-                {filteredMetricsText || "No metric preview available."}
-              </pre>
+        <div className="prometheus-tab__debug-panel">
+          <div className="prometheus-tab__debug-panel-header">
+            <div>
+              <h3 className="prometheus-tab__debug-panel-title">Filtered Metric Preview</h3>
+              <p className="prometheus-tab__debug-panel-subtitle">
+                Trend preview for the selected Prometheus metric over the last 30 minutes.
+              </p>
             </div>
-          </details>
+
+            <div className="prometheus-tab__debug-controls">
+              <select
+                className="prometheus-tab__select"
+                value={selectedPreviewMetric}
+                onChange={(event) => setSelectedPreviewMetric(event.target.value)}
+              >
+                <option value="scrape_duration_seconds">Scrape Duration</option>
+                <option value="scrape_samples">Scrape Samples</option>
+                <option value="targets_up">Targets Up</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="prometheus-tab__chart-meta">
+            <span>{selectedPreviewMetricLabel}</span>
+            <span>{metricChartData.length > 0 ? `${metricChartData.length} point(s)` : "0 points"}</span>
+          </div>
+
+          {metricPreviewLoading ? (
+            <div className="prometheus-tab__debug-empty">Loading metric preview...</div>
+          ) : metricPreviewError ? (
+            <div className="prometheus-tab__debug-empty">{metricPreviewError}</div>
+          ) : metricChartData.length === 0 ? (
+            <div className="prometheus-tab__debug-empty">
+              No metric preview data available for the selected metric yet.
+            </div>
+          ) : (
+            <div className="prometheus-tab__chart-shell">
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={metricChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="time" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="value" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </section>
 

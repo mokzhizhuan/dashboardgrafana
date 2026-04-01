@@ -1,5 +1,19 @@
 # Engineering Dashboard
 
+## Quick start for users
+
+Load the packaged Docker images first:
+
+```powershell
+docker load -i dashboard-images.tar
+```
+
+Then start the system:
+
+```powershell
+docker compose up -d --no-build
+```
+
 A Docker-based engineering monitoring dashboard that combines:
 
 - **React + Vite frontend**
@@ -93,6 +107,12 @@ Example init sequence:
 
 ### Option 1: Batch files
 
+Before starting for the first time, make sure the packaged images are loaded:
+
+```powershell
+docker load -i dashboard-images.tar
+```
+
 Run:
 
 ```powershell
@@ -112,6 +132,12 @@ reset_dashboard.bat
 ```
 
 ### Option 2: Desktop launcher
+
+Before using the launcher for the first time, make sure the packaged images are loaded:
+
+```powershell
+docker load -i dashboard-images.tar
+```
 
 Run:
 
@@ -226,8 +252,27 @@ git remote add origin <your-github-repo-url>
 git push -u origin main
 ```
 
+## Login Accounts
+
+Use the following accounts to sign in to the dashboard:
+
+### User account
+- **Username:** `user`
+- **Password:** `user`
+
+### Admin account
+- **Username:** `admin`
+- **Password:** `admin`
+
+## Access Notes
+
+- **User** can access the main monitoring dashboard pages.
+- **Admin** can access everything, including the **Admin** tab and simulator controls.
+- If you are signed in as **user**, the system will show your user status and logout option, but admin-only actions will remain restricted.
+
 ## Notes
 
 - Keep the launcher EXE in the project root beside the batch files and `docker-compose.yml`
 - Docker Desktop must be running before using the launcher
 - Main dashboard device and sensor dropdowns are loaded from the database instead of hardcoded lists
+- Include the project presentation slides together with the delivery files so users can follow the user guide during setup and operation

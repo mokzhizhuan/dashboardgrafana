@@ -7,6 +7,7 @@ import requests
 from urllib.parse import quote
 from urllib.request import Request as UrlRequest, urlopen
 from fastapi import APIRouter, Request, Response
+from datetime import datetime, timezone, timedelta
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     Counter,
@@ -518,4 +519,62 @@ def prometheus_summary():
             "scrape_samples": scrape_samples,
             "last_error": prometheus_targets.get("last_error"),
         },
+    }
+
+def _prometheus_range_query(expression: str, start_ts: float, end_ts: float, step_seconds: int = 60):
+    encoded_query = quote(expression, safe="")
+    url = (
+        f"{PROMETHEUS_BASE_URL}/api/v1/query_range"
+        f"?query={encoded_query}"
+        f"&start={start_ts}"
+        f"&end={end_ts}"
+        f"&step={step_seconds}"
+    )
+    payload = _fetch_json(url)
+    if not payload or payload.get("status") != "success":
+        return None
+
+    data = payload.get("data", {})
+    result = data.get("result", [])
+    if isinstance(result, list):
+        return result
+    return None
+
+@router.get("/metric-preview")
+def prometheus_metric_preview(metric: str = "scrape_duration_seconds", minutes: int = 30):
+    safe_minutes = max(5, min(minutes, 180))
+    end_ts = time()
+    start_ts = end_ts - (safe_minutes * 60)
+
+    expression_map = {
+        "scrape_duration_seconds": f'avg(scrape_duration_seconds{{job="{PROMETHEUS_JOB_NAME}"}})',
+        "scrape_samples": f'avg(scrape_samples_post_metric_relabeling{{job="{PROMETHEUS_JOB_NAME}"}})',
+        "targets_up": f'sum(up{{job="{PROMETHEUS_JOB_NAME}"}})',
+    }
+
+    expression = expression_map.get(metric)
+    if not expression:
+        return {"metric": metric, "points": [], "error": "Unsupported preview metric"}
+
+    result = _prometheus_range_query(expression, start_ts, end_ts, step_seconds=60)
+    if not result:
+        return {"metric": metric, "points": []}
+
+    series = result[0] if result else {}
+    values = series.get("values", [])
+
+    points = []
+    for item in values:
+        try:
+            ts_raw, val_raw = item
+            points.append({
+                "timestamp": float(ts_raw),
+                "value": float(val_raw),
+            })
+        except Exception:
+            continue
+
+    return {
+        "metric": metric,
+        "points": points,
     }

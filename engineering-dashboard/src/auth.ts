@@ -12,34 +12,57 @@ const TOKEN_KEY = "app_token";
 const ROLE_KEY = "app_role";
 const USERNAME_KEY = "app_username";
 
+function storage() {
+  return sessionStorage;
+}
+
 export function saveAuth(data: LoginResponse) {
-  localStorage.setItem(TOKEN_KEY, data.access_token);
-  localStorage.setItem(ROLE_KEY, data.role);
-  localStorage.setItem(USERNAME_KEY, data.username);
+  storage().setItem(TOKEN_KEY, data.access_token);
+  storage().setItem(ROLE_KEY, data.role);
+  storage().setItem(USERNAME_KEY, data.username);
 }
 
 export function clearAuth() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(ROLE_KEY);
-  localStorage.removeItem(USERNAME_KEY);
+  storage().removeItem(TOKEN_KEY);
+  storage().removeItem(ROLE_KEY);
+  storage().removeItem(USERNAME_KEY);
 }
 
 export function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
+  return storage().getItem(TOKEN_KEY);
+}
+
+export function isLoggedIn() {
+  return !!getToken();
 }
 
 export function getRole(): UserRole | null {
-  const role = localStorage.getItem(ROLE_KEY);
+  const role = storage().getItem(ROLE_KEY);
   if (role === "admin" || role === "viewer") return role;
   return null;
 }
 
 export function getUsername() {
-  return localStorage.getItem(USERNAME_KEY);
+  return storage().getItem(USERNAME_KEY);
 }
 
 export function isAdmin() {
-  return getRole() === "admin";
+  const token = getToken();
+  const role = getRole();
+
+  if (!token || role !== "admin") {
+    return false;
+  }
+
+  return true;
+}
+
+export function getAuthUser() {
+  return {
+    token: getToken(),
+    role: getRole(),
+    username: getUsername(),
+  };
 }
 
 export function authHeaders(): HeadersInit {

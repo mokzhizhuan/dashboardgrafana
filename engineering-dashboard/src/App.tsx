@@ -10,8 +10,7 @@ import React, {
 import "./App.css";
 import LoginPage from "./LoginPage";
 import AdminRoute from "./AdminRoute";
-import { clearAuth, getRole, getToken, getUsername, isAdmin } from "./auth";
-
+import { clearAuth, getRole, getUsername, isAdmin, isLoggedIn } from "./auth";
 import MLMonitoringDashboard from "./components/mlmonitoring/MLMonitoringDashboard";
 import GrafanaTab from "./components/GrafanaTab";
 import MLModelTab from "./components/MLModelTab";
@@ -80,7 +79,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const CACHE_TTL_MS = 15000;
 
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(!!getToken());
+  const [loggedIn, setLoggedIn] = useState(isLoggedIn());
   const [mainTab, setMainTab] = useState<MainTab>("main");
   const [showOverview, setShowOverview] = useState(true);
   const [showControls, setShowControls] = useState(true);
@@ -122,7 +121,7 @@ export default function App() {
   const telemetryAbortRef = useRef<AbortController | null>(null);
   const rawAbortRef = useRef<AbortController | null>(null);
   const fftAbortRef = useRef<AbortController | null>(null);
-
+  const [adminLoginMessage, setAdminLoginMessage] = useState("");
   const role = getRole();
   const username = getUsername();
 
@@ -602,6 +601,7 @@ export default function App() {
               clearAuth();
               setLoggedIn(false);
               setMainTab("main");
+              setAdminLoginMessage("");
             }}
           >
             Logout
@@ -703,16 +703,39 @@ export default function App() {
         )}
 
         {mainTab === "admin" && (
-            <>
-              {!loggedIn ? (
-                <LoginPage onLoginSuccess={() => setLoggedIn(true)} />
-              ) : (
-                <AdminRoute>
-                  <AdminTab />
-                </AdminRoute>
-              )}
-            </>
-          )}
+          <>
+            {!loggedIn ? (
+              <LoginPage
+                onLoginSuccess={() => {
+                  setLoggedIn(true);
+                  setAdminLoginMessage("");
+                }}
+                message={adminLoginMessage}
+              />
+            ) : role !== "admin" ? (
+              <div style={{ maxWidth: 520, margin: "40px auto", padding: 24 }}>
+                <div className="panel-card">
+                  <h2 style={{ marginBottom: 8 }}>Admin Access Required</h2>
+                  <p style={{ marginBottom: 0, opacity: 0.8 }}>
+                    You are signed in as <strong>{username}</strong> ({role}), but this section
+                    requires an admin account.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <AdminRoute
+                onExpired={() => {
+                  clearAuth();
+                  setLoggedIn(false);
+                  setMainTab("main");
+                  setAdminLoginMessage("Your session expired. Please log in again.");
+                }}
+              >
+                <AdminTab />
+              </AdminRoute>
+            )}
+          </>
+        )}
           {mainTab === "prometheus" && (
             <PrometheusTab
               summary={prometheusSummary}

@@ -223,10 +223,9 @@ def get_performance_snapshot():
             ui_status = "warning"
             latest_status = "Aging"
         elif freshness == "stale":
-            api_status = "error"
-            ui_status = "error"
+            api_status = "warning"
+            ui_status = "warning"
             latest_status = "Stale"
-
         runtime = [
             build_runtime_row(
                 module="Telemetry",

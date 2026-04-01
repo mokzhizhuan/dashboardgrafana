@@ -37,10 +37,6 @@ type ConfirmAction =
 
   
 export default function AdminTab() {
-  if (!isAdmin()) {
-    return <Navigate to="/login" replace />;
-  }
-  
   const {
     streamMode,
     status,

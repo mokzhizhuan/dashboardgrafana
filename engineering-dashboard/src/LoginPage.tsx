@@ -3,13 +3,14 @@ import { saveAuth } from "./auth";
 
 type Props = {
   onLoginSuccess: () => void;
+  message?: string;
 };
 
-export default function LoginPage({ onLoginSuccess }: Props) {
+export default function LoginPage({ onLoginSuccess, message = "" }: Props) {
   const API = "http://localhost:8000";
 
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin123");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -48,6 +49,23 @@ export default function LoginPage({ onLoginSuccess }: Props) {
           Sign in to access the monitoring workspace.
         </p>
 
+        {message ? (
+          <div
+            style={{
+              marginBottom: 12,
+              padding: "10px 12px",
+              borderRadius: 10,
+              border: "1px solid #f5c2c7",
+              background: "#fff3f4",
+              color: "#9f1239",
+              fontSize: 14,
+              fontWeight: 600,
+            }}
+          >
+            {message}
+          </div>
+        ) : null}
+
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: 12 }}>
             <label>Username</label>
@@ -70,7 +88,9 @@ export default function LoginPage({ onLoginSuccess }: Props) {
             />
           </div>
 
-          {error && <div style={{ color: "#d33", marginBottom: 12 }}>{error}</div>}
+          {error ? (
+            <div style={{ color: "#d33", marginBottom: 12 }}>{error}</div>
+          ) : null}
 
           <button
             type="submit"
