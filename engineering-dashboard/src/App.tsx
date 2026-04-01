@@ -1,16 +1,8 @@
-import React, {
-  Suspense,
-  lazy,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import LoginPage from "./LoginPage";
 import AdminRoute from "./AdminRoute";
-import { clearAuth, getRole, getUsername, isAdmin, isLoggedIn } from "./auth";
+import { clearAuth, getRole, getUsername, isLoggedIn } from "./auth";
 import MLMonitoringDashboard from "./components/mlmonitoring/MLMonitoringDashboard";
 import GrafanaTab from "./components/GrafanaTab";
 import MLModelTab from "./components/MLModelTab";
@@ -70,25 +62,23 @@ type MainTab =
   | "performance"
   | "admin";
 
-type CacheEntry<T> = {
-  data: T;
-  updatedAt: number;
-};
-
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-const CACHE_TTL_MS = 15000;
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());
   const [mainTab, setMainTab] = useState<MainTab>("main");
   const [showOverview, setShowOverview] = useState(true);
   const [showControls, setShowControls] = useState(true);
+
   const [deviceName, setDeviceName] = useState("");
   const [sensorName, setSensorName] = useState("");
 
   const [items, setItems] = useState<TelemetryItem[]>([]);
   const [rawItems, setRawItems] = useState<RawSensorItem[]>([]);
   const [fftItems, setFftItems] = useState<FFTItem[]>([]);
+
+  const [telemetryDeviceOptions, setTelemetryDeviceOptions] = useState<string[]>([]);
+  const [sensorOptions, setSensorOptions] = useState<string[]>([]);
 
   const [status, setStatus] = useState("Ready");
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
@@ -98,89 +88,48 @@ export default function App() {
   const [isLoadingTelemetry, setIsLoadingTelemetry] = useState(false);
   const [isLoadingRaw, setIsLoadingRaw] = useState(false);
   const [isLoadingFft, setIsLoadingFft] = useState(false);
-  const [isSubmittingTelemetry] = useState(false);
-  const [isSubmittingRaw] = useState(false);
   const [isRunningFft] = useState(false);
+
   const [prometheusSummary, setPrometheusSummary] =
     useState<PrometheusSummary | null>(null);
   const [prometheusMetrics, setPrometheusMetrics] = useState<PrometheusMetricSample[]>([]);
   const [isLoadingPrometheus, setIsLoadingPrometheus] = useState(false);
   const [prometheusError, setPrometheusError] = useState<string | null>(null);
+
   const [performanceData, setPerformanceData] =
     useState<PerformanceSnapshot | null>(null);
   const [isLoadingPerformance, setIsLoadingPerformance] = useState(false);
   const [isRefreshingPerformance, setIsRefreshingPerformance] = useState(false);
 
-  const telemetryCacheRef = useRef<Record<string, CacheEntry<TelemetryItem[]>>>(
-    {}
-  );
-  const rawCacheRef = useRef<Record<string, CacheEntry<RawSensorItem[]>>>({});
-  const fftCacheRef = useRef<Record<string, CacheEntry<FFTItem[]>>>({});
-  const [telemetryDeviceOptions, setTelemetryDeviceOptions] = useState<string[]>([]);
-  const [sensorOptions, setSensorOptions] = useState<string[]>([]);
+  const [adminLoginMessage, setAdminLoginMessage] = useState("");
+
   const telemetryAbortRef = useRef<AbortController | null>(null);
   const rawAbortRef = useRef<AbortController | null>(null);
   const fftAbortRef = useRef<AbortController | null>(null);
-  const [adminLoginMessage, setAdminLoginMessage] = useState("");
+
   const role = getRole();
   const username = getUsername();
 
-  const isFresh = useCallback((updatedAt?: number) => {
-    if (!updatedAt) return false;
-    return Date.now() - updatedAt < CACHE_TTL_MS;
-  }, []);
-    const loadMainDashboardOptions = useCallback(async () => {
-      try {
-        const res = await fetch(`${API_BASE}/main-dashboard/options`);
+  const setDeviceOptionsFromTelemetry = useCallback(
+    (rows: TelemetryItem[], preferredDevice?: string) => {
+      setDeviceName((prev) => {
+        const current = preferredDevice ?? prev;
+        if (current) return current;
 
-        if (!res.ok) {
-          throw new Error(`Main dashboard options request failed: ${res.status}`);
-        }
+        const fallback = rows.find((row) => row.device_name)?.device_name ?? "";
+        return fallback;
+      });
+    },
+    []
+  );
 
-        const data = await res.json();
+  const syncSelectedSensor = useCallback((preferredSensor?: string) => {
+  setSensorName((prev) => preferredSensor ?? prev ?? "");
+}, []);
 
-        const nextTelemetryOptions = Array.isArray(data?.telemetry_devices)
-          ? data.telemetry_devices
-          : [];
-
-        const nextSensorOptions = Array.isArray(data?.sensors)
-          ? data.sensors
-          : [];
-
-        setTelemetryDeviceOptions(nextTelemetryOptions);
-        setSensorOptions(nextSensorOptions);
-
-        setDeviceName((prev) =>
-          nextTelemetryOptions.includes(prev)
-            ? prev
-            : nextTelemetryOptions[0] ?? ""
-        );
-
-        setSensorName((prev) =>
-          nextSensorOptions.includes(prev)
-            ? prev
-            : nextSensorOptions[0] ?? ""
-        );
-      } catch (error) {
-        console.error(error);
-        setTelemetryDeviceOptions([]);
-        setSensorOptions([]);
-      }
-    }, []);
-  useEffect(() => {
-    if (!loggedIn) return;
-    loadMainDashboardOptions(); 
-  }, [loggedIn , loadMainDashboardOptions]); 
   const loadTelemetry = useCallback(
-    async (selectedDevice?: string, force = false) => {
+    async (selectedDevice?: string) => {
       const device = selectedDevice ?? deviceName;
-      const cacheKey = device;
-      const cached = telemetryCacheRef.current[cacheKey];
-
-      if (!force && cached && isFresh(cached.updatedAt)) {
-        setItems(cached.data);
-        return cached.data;
-      }
 
       telemetryAbortRef.current?.abort();
       const controller = new AbortController();
@@ -188,10 +137,12 @@ export default function App() {
 
       try {
         setIsLoadingTelemetry(true);
-        const res = await fetch(
-          `${API_BASE}/telemetry?device=${encodeURIComponent(device)}`,
-          { signal: controller.signal }
-        );
+
+        const url = device
+          ? `${API_BASE}/telemetry?device=${encodeURIComponent(device)}`
+          : `${API_BASE}/telemetry`;
+
+        const res = await fetch(url, { signal: controller.signal });
 
         if (!res.ok) {
           throw new Error(`Telemetry request failed: ${res.status}`);
@@ -200,20 +151,16 @@ export default function App() {
         const data = await res.json();
         const nextItems = Array.isArray(data) ? data : [];
 
-        telemetryCacheRef.current[cacheKey] = {
-          data: nextItems,
-          updatedAt: Date.now(),
-        };
-
         setItems(nextItems);
+        setDeviceOptionsFromTelemetry(nextItems, device);
+
         return nextItems;
       } catch (error) {
-        if ((error as Error).name === "AbortError") {
-          return cached?.data ?? [];
-        }
+        if ((error as Error).name === "AbortError") return [];
         console.error(error);
         setItems([]);
-        throw error;
+        setTelemetryDeviceOptions([]);
+        return [];
       } finally {
         if (telemetryAbortRef.current === controller) {
           telemetryAbortRef.current = null;
@@ -221,8 +168,139 @@ export default function App() {
         setIsLoadingTelemetry(false);
       }
     },
-    [deviceName, isFresh]
+    [deviceName, setDeviceOptionsFromTelemetry]
   );
+
+  const loadMainDashboardOptions = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/main-dashboard/options`);
+
+      if (!res.ok) {
+        throw new Error(`Main dashboard options request failed: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      const nextTelemetryOptions = Array.isArray(data?.telemetry_devices)
+        ? data.telemetry_devices
+        : [];
+
+      const nextSensorOptions = Array.isArray(data?.sensors)
+        ? data.sensors
+        : [];
+
+      setTelemetryDeviceOptions(nextTelemetryOptions);
+      setSensorOptions(nextSensorOptions);
+
+      setDeviceName((prev) =>
+        nextTelemetryOptions.includes(prev) ? prev : nextTelemetryOptions[0] ?? ""
+      );
+
+      setSensorName((prev) =>
+        nextSensorOptions.includes(prev) ? prev : nextSensorOptions[0] ?? ""
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+ const loadRawSensorData = useCallback(
+    async (selectedSensor?: string) => {
+      const sensor = selectedSensor ?? sensorName;
+
+      if (!sensor) {
+        setRawItems([]);
+        return [];
+      }
+
+      rawAbortRef.current?.abort();
+      const controller = new AbortController();
+      rawAbortRef.current = controller;
+
+      try {
+        setIsLoadingRaw(true);
+
+        const res = await fetch(
+          `${API_BASE}/fft/raw?sensor_name=${encodeURIComponent(sensor)}&limit=50`,
+          { signal: controller.signal }
+        );
+
+        if (!res.ok) {
+          throw new Error(`Raw sensor request failed: ${res.status}`);
+        }
+
+        const data = await res.json();
+        const nextItems = Array.isArray(data) ? data : [];
+
+        setRawItems(nextItems);
+        syncSelectedSensor(sensor);
+
+        return nextItems;
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return [];
+        console.error(error);
+        setRawItems([]);
+        return [];
+      } finally {
+        if (rawAbortRef.current === controller) {
+          rawAbortRef.current = null;
+        }
+        setIsLoadingRaw(false);
+      }
+    },
+    [sensorName, syncSelectedSensor]
+  );
+  const loadFftSpectrum = useCallback(
+    async (selectedSensor?: string) => {
+      const sensor = selectedSensor ?? sensorName;
+
+      if (!sensor) {
+        setFftItems([]);
+        return [];
+      }
+
+      fftAbortRef.current?.abort();
+      const controller = new AbortController();
+      fftAbortRef.current = controller;
+
+      try {
+        setIsLoadingFft(true);
+
+        const res = await fetch(
+          `${API_BASE}/fft/spectrum?sensor_name=${encodeURIComponent(sensor)}`,
+          { signal: controller.signal }
+        );
+
+        if (!res.ok) {
+          throw new Error(`FFT request failed: ${res.status}`);
+        }
+
+        const data = await res.json();
+        const nextItems = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.items)
+          ? data.items
+          : [];
+
+        const trimmedItems = nextItems.slice(0, 300);
+        setFftItems(trimmedItems);
+
+        return trimmedItems;
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return [];
+        console.error(error);
+        setFftItems([]);
+        return [];
+      } finally {
+        if (fftAbortRef.current === controller) {
+          fftAbortRef.current = null;
+        }
+        setIsLoadingFft(false);
+      }
+    },
+    [sensorName]
+  );
+
   const loadPrometheusSummary = useCallback(async () => {
     try {
       setIsLoadingPrometheus(true);
@@ -257,117 +335,6 @@ export default function App() {
       setIsLoadingPrometheus(false);
     }
   }, []);
-  const loadRawSensorData = useCallback(
-    async (selectedSensor?: string, force = false) => {
-      const sensor = selectedSensor ?? sensorName;
-      const cacheKey = sensor;
-      const cached = rawCacheRef.current[cacheKey];
-
-      if (!force && cached && isFresh(cached.updatedAt)) {
-        setRawItems(cached.data);
-        return cached.data;
-      }
-
-      rawAbortRef.current?.abort();
-      const controller = new AbortController();
-      rawAbortRef.current = controller;
-
-      try {
-        setIsLoadingRaw(true);
-        const res = await fetch(
-          `${API_BASE}/fft/raw?sensor_name=${encodeURIComponent(sensor)}&limit=50`,
-          { signal: controller.signal }
-        );
-
-        if (!res.ok) {
-          throw new Error(`Raw sensor request failed: ${res.status}`);
-        }
-
-        const data = await res.json();
-        const nextItems = Array.isArray(data) ? data : [];
-
-        rawCacheRef.current[cacheKey] = {
-          data: nextItems,
-          updatedAt: Date.now(),
-        };
-
-        setRawItems(nextItems);
-        return nextItems;
-      } catch (error) {
-        if ((error as Error).name === "AbortError") {
-          return cached?.data ?? [];
-        }
-        console.error(error);
-        setRawItems([]);
-        throw error;
-      } finally {
-        if (rawAbortRef.current === controller) {
-          rawAbortRef.current = null;
-        }
-        setIsLoadingRaw(false);
-      }
-    },
-    [sensorName, isFresh]
-  );
-
-  const loadFftSpectrum = useCallback(
-    async (selectedSensor?: string, force = false) => {
-      const sensor = selectedSensor ?? sensorName;
-      const cacheKey = sensor;
-      const cached = fftCacheRef.current[cacheKey];
-
-      if (!force && cached && isFresh(cached.updatedAt)) {
-        setFftItems(cached.data);
-        return cached.data;
-      }
-
-      fftAbortRef.current?.abort();
-      const controller = new AbortController();
-      fftAbortRef.current = controller;
-
-      try {
-        setIsLoadingFft(true);
-        const res = await fetch(
-          `${API_BASE}/fft/spectrum?sensor_name=${encodeURIComponent(sensor)}`,
-          { signal: controller.signal }
-        );
-
-        if (!res.ok) {
-          throw new Error(`FFT request failed: ${res.status}`);
-        }
-
-        const data = await res.json();
-        const nextItems = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.items)
-          ? data.items
-          : [];
-
-        const trimmedItems = nextItems.slice(0, 300);
-
-        fftCacheRef.current[cacheKey] = {
-          data: trimmedItems,
-          updatedAt: Date.now(),
-        };
-
-        setFftItems(trimmedItems);
-        return trimmedItems;
-      } catch (error) {
-        if ((error as Error).name === "AbortError") {
-          return cached?.data ?? [];
-        }
-        console.error(error);
-        setFftItems([]);
-        throw error;
-      } finally {
-        if (fftAbortRef.current === controller) {
-          fftAbortRef.current = null;
-        }
-        setIsLoadingFft(false);
-      }
-    },
-    [sensorName, isFresh]
-  );
 
   const fetchPerformanceData = useCallback(
     async (isRefresh = false) => {
@@ -459,29 +426,55 @@ export default function App() {
   );
 
   const refreshActiveData = useCallback(
-    async (force = false) => {
+    async (isManual = false) => {
       try {
         if (mainTab === "main") {
           setStatus("Loading main dashboard...");
-          await Promise.all([
-            loadTelemetry(deviceName, force),
-            loadRawSensorData(sensorName, force),
-          ]);
+
+          await loadTelemetry(deviceName || undefined);
+
+          if (sensorName) {
+            await Promise.allSettled([
+              loadRawSensorData(sensorName),
+              loadFftSpectrum(sensorName),
+            ]);
+          } else {
+            setRawItems([]);
+            setFftItems([]);
+          }
+
           setStatus("Main dashboard ready");
           return;
         }
 
         if (mainTab === "grafana") {
+          if (!deviceName) {
+            await loadTelemetry();
+          }
+          if (!sensorOptions.length) {
+            await loadMainDashboardOptions();
+          }
           setStatus("Grafana ready");
           return;
         }
 
         if (mainTab === "ml-model") {
           setStatus("Loading ML model data...");
-          await Promise.all([
-            loadRawSensorData(sensorName, force),
-            loadFftSpectrum(sensorName, force),
-          ]);
+
+          if (!sensorOptions.length) {
+            await loadMainDashboardOptions();
+          }
+
+          if (sensorName) {
+            await Promise.all([
+              loadRawSensorData(sensorName),
+              loadFftSpectrum(sensorName),
+            ]);
+          } else {
+            setRawItems([]);
+            setFftItems([]);
+          }
+
           setStatus("ML model data ready");
           return;
         }
@@ -493,13 +486,32 @@ export default function App() {
 
         if (mainTab === "performance") {
           setStatus("Loading performance data...");
-          await Promise.all([
-            loadTelemetry(deviceName, force),
-            loadRawSensorData(sensorName, force),
-            loadFftSpectrum(sensorName, force),
-          ]);
-          await fetchPerformanceData(force);
+
+          await loadTelemetry(deviceName || undefined);
+
+          if (!sensorOptions.length) {
+            await loadMainDashboardOptions();
+          }
+
+          if (sensorName) {
+            await Promise.all([
+              loadRawSensorData(sensorName),
+              loadFftSpectrum(sensorName),
+            ]);
+          } else {
+            setRawItems([]);
+            setFftItems([]);
+          }
+
+          await fetchPerformanceData(isManual);
           setStatus("Performance data ready");
+          return;
+        }
+
+        if (mainTab === "prometheus") {
+          setStatus("Loading Prometheus monitoring...");
+          await loadPrometheusSummary();
+          setStatus("Prometheus monitoring ready");
           return;
         }
 
@@ -507,35 +519,63 @@ export default function App() {
           setStatus("Admin workspace ready");
           return;
         }
-        if (mainTab === "prometheus") {
-          setStatus("Loading Prometheus monitoring...");
-          await loadPrometheusSummary();
-          setStatus("Prometheus monitoring ready");
-          return;
-        }
+
+        setStatus("Ready");
       } catch (error) {
         console.error(error);
         setStatus("Failed to refresh active data");
       }
     },
     [
+      mainTab,
       deviceName,
       sensorName,
-      mainTab,
+      sensorOptions.length,
       loadTelemetry,
+      loadMainDashboardOptions,
       loadRawSensorData,
       loadFftSpectrum,
+      loadPrometheusSummary,
       fetchPerformanceData,
     ]
   );
 
   useEffect(() => {
-    if (!loggedIn) return;
-    refreshActiveData(false);
-  }, [loggedIn, mainTab, refreshActiveData]);
+    loadTelemetry();
+    loadMainDashboardOptions();
+  }, [loadTelemetry, loadMainDashboardOptions]);
 
   useEffect(() => {
-    if (!loggedIn || !autoRefreshEnabled) return;
+    refreshActiveData(false);
+  }, [mainTab, refreshActiveData]);
+
+  useEffect(() => {
+    if (mainTab !== "main") return;
+    if (!deviceName) return;
+    loadTelemetry(deviceName);
+  }, [deviceName, mainTab, loadTelemetry]);
+
+  useEffect(() => {
+    if (
+      mainTab !== "main" &&
+      mainTab !== "ml-model" &&
+      mainTab !== "performance"
+    ) {
+      return;
+    }
+
+    if (!sensorName) {
+      setRawItems([]);
+      setFftItems([]);
+      return;
+    }
+
+    loadRawSensorData(sensorName);
+    loadFftSpectrum(sensorName);
+  }, [sensorName, mainTab, loadRawSensorData, loadFftSpectrum]);
+
+  useEffect(() => {
+    if (!autoRefreshEnabled) return;
 
     const interval = window.setInterval(async () => {
       await refreshActiveData(true);
@@ -543,7 +583,7 @@ export default function App() {
     }, Math.max(5, autoRefreshSeconds) * 1000);
 
     return () => window.clearInterval(interval);
-  }, [loggedIn, autoRefreshEnabled, autoRefreshSeconds, refreshActiveData]);
+  }, [autoRefreshEnabled, autoRefreshSeconds, refreshActiveData]);
 
   useEffect(() => {
     return () => {
@@ -558,7 +598,7 @@ export default function App() {
 
   const overviewCards = useMemo(
     () => [
-      { label: "Selected Device", value: deviceName },
+      { label: "Selected Device", value: deviceName || "--" },
       {
         label: "Latest Temperature",
         value: latestTelemetry ? `${latestTelemetry.temperature}` : "--",
@@ -567,7 +607,7 @@ export default function App() {
         label: "Latest Humidity",
         value: latestTelemetry ? `${latestTelemetry.humidity}` : "--",
       },
-      { label: "Selected Sensor", value: sensorName },
+      { label: "Selected Sensor", value: sensorName || "--" },
       {
         label: "Latest Raw Value",
         value: latestRaw ? `${latestRaw.value}` : "--",
@@ -578,173 +618,175 @@ export default function App() {
   );
 
   return (
-     <div className="dashboard-shell">
-    <header className="hero-card">
-      <div>
-        <h1 className="hero-title">Main Grafana Monitoring Dashboard</h1>
-        <p className="hero-subtitle">
-          Database-driven monitoring platform for Grafana analytics, ML model
-          insights, and system performance.
-        </p>
+    <div className="dashboard-shell">
+      <header className="hero-card">
+        <div>
+          <h1 className="hero-title">Main Grafana Monitoring Dashboard</h1>
+          <p className="hero-subtitle">
+            Database-driven monitoring platform for Grafana analytics, ML model
+            insights, and system performance.
+          </p>
+
+          {loggedIn && (
+            <p className="hero-subtitle" style={{ marginTop: 8 }}>
+              Signed in as <strong>{username}</strong> ({role})
+            </p>
+          )}
+        </div>
 
         {loggedIn && (
-          <p className="hero-subtitle" style={{ marginTop: 8 }}>
-            Signed in as <strong>{username}</strong> ({role})
-          </p>
+          <div style={{ marginTop: 16 }}>
+            <button
+              onClick={() => {
+                clearAuth();
+                setLoggedIn(false);
+                setMainTab("main");
+                setAdminLoginMessage("");
+              }}
+            >
+              Logout
+            </button>
+          </div>
         )}
-      </div>
+      </header>
 
-      {loggedIn && (
-        <div style={{ marginTop: 16 }}>
-          <button
-            onClick={() => {
-              clearAuth();
-              setLoggedIn(false);
-              setMainTab("main");
-              setAdminLoginMessage("");
-            }}
-          >
-            Logout
-          </button>
-        </div>
+      <nav className="top-tabs">
+        <button
+          className={`top-tab ${mainTab === "main" ? "active" : ""}`}
+          onClick={() => setMainTab("main")}
+        >
+          Main
+        </button>
+
+        <button
+          className={`top-tab ${mainTab === "grafana" ? "active" : ""}`}
+          onClick={() => setMainTab("grafana")}
+        >
+          Grafana
+        </button>
+
+        <button
+          className={`top-tab ${mainTab === "ml-model" ? "active" : ""}`}
+          onClick={() => setMainTab("ml-model")}
+        >
+          ML Model
+        </button>
+
+        <button
+          className={`top-tab ${mainTab === "performance" ? "active" : ""}`}
+          onClick={() => setMainTab("performance")}
+        >
+          Performance
+        </button>
+
+        <button
+          className={`top-tab ${mainTab === "admin" ? "active" : ""}`}
+          onClick={() => setMainTab("admin")}
+        >
+          Admin
+        </button>
+
+        <button
+          className={`top-tab ${mainTab === "prometheus" ? "active" : ""}`}
+          onClick={() => setMainTab("prometheus")}
+        >
+          Prometheus
+        </button>
+      </nav>
+
+      {mainTab === "main" && (
+        <MainDashboardTab
+          showOverview={showOverview}
+          setShowOverview={setShowOverview}
+          showControls={showControls}
+          setShowControls={setShowControls}
+          overviewCards={overviewCards}
+          deviceName={deviceName}
+          setDeviceName={setDeviceName}
+          sensorName={sensorName}
+          setSensorName={setSensorName}
+          telemetryDeviceOptions={telemetryDeviceOptions}
+          sensorOptions={sensorOptions}
+          autoRefreshEnabled={autoRefreshEnabled}
+          setAutoRefreshEnabled={setAutoRefreshEnabled}
+          autoRefreshSeconds={autoRefreshSeconds}
+          setAutoRefreshSeconds={setAutoRefreshSeconds}
+          lastAutoRefreshAt={lastAutoRefreshAt}
+          refreshActiveData={() => refreshActiveData(true)}
+          status={status}
+          telemetryCount={items.length}
+          rawCount={rawItems.length}
+          fftCount={fftItems.length}
+          isLoadingTelemetry={isLoadingTelemetry}
+          isLoadingRaw={isLoadingRaw}
+          isLoadingFft={isLoadingFft}
+        />
       )}
-    </header>
 
-    <nav className="top-tabs">
-      <button
-        className={`top-tab ${mainTab === "main" ? "active" : ""}`}
-        onClick={() => setMainTab("main")}
-      >
-        Main
-      </button>
+      {mainTab === "grafana" && (
+        <GrafanaTab selectedDevice={deviceName} selectedSensor={sensorName} />
+      )}
 
-      <button
-        className={`top-tab ${mainTab === "grafana" ? "active" : ""}`}
-        onClick={() => setMainTab("grafana")}
-      >
-        Grafana
-      </button>
+      {mainTab === "ml-model" && (
+        <MLModelTab onOpenMonitoringDashboard={() => setMainTab("ml-monitoring")} />
+      )}
 
-      <button
-        className={`top-tab ${mainTab === "ml-model" ? "active" : ""}`}
-        onClick={() => setMainTab("ml-model")}
-      >
-        ML Model
-      </button>
+      {mainTab === "ml-monitoring" && (
+        <MLMonitoringDashboard onBackToModels={() => setMainTab("ml-model")} />
+      )}
 
-      <button
-        className={`top-tab ${mainTab === "performance" ? "active" : ""}`}
-        onClick={() => setMainTab("performance")}
-      >
-        Performance
-      </button>
+      {mainTab === "performance" && (
+        <PerformanceTab
+          data={performanceData}
+          isLoading={isLoadingPerformance}
+          isRefreshing={isRefreshingPerformance}
+        />
+      )}
 
-      <button
-        className={`top-tab ${mainTab === "admin" ? "active" : ""}`}
-        onClick={() => setMainTab("admin")}
-      >
-        Admin
-      </button>
-      <button
-        className={`top-tab ${mainTab === "prometheus" ? "active" : ""}`}
-        onClick={() => setMainTab("prometheus")}
-      >
-        Prometheus
-      </button>
-    </nav>
-
-        {mainTab === "main" && (
-          <MainDashboardTab
-            showOverview={showOverview}
-            setShowOverview={setShowOverview}
-            showControls={showControls}
-            setShowControls={setShowControls}
-            overviewCards={overviewCards}
-            deviceName={deviceName}
-            setDeviceName={setDeviceName}
-            sensorName={sensorName}
-            setSensorName={setSensorName}
-            telemetryDeviceOptions={telemetryDeviceOptions}
-            sensorOptions={sensorOptions}
-            autoRefreshEnabled={autoRefreshEnabled}
-            setAutoRefreshEnabled={setAutoRefreshEnabled}
-            autoRefreshSeconds={autoRefreshSeconds}
-            setAutoRefreshSeconds={setAutoRefreshSeconds}
-            lastAutoRefreshAt={lastAutoRefreshAt}
-            refreshActiveData={() => refreshActiveData(true)}
-            status={status}
-            telemetryCount={items.length}
-            rawCount={rawItems.length}
-            fftCount={fftItems.length}
-            isLoadingTelemetry={isLoadingTelemetry}
-            isLoadingRaw={isLoadingRaw}
-            isLoadingFft={isLoadingFft}
-          />
-        )}
-
-        {mainTab === "grafana" && (
-          <GrafanaTab selectedDevice={deviceName} selectedSensor={sensorName} />
-        )}
-
-        {mainTab === "ml-model" && (
-          <MLModelTab onOpenMonitoringDashboard={() => setMainTab("ml-monitoring")} />
-        )}
-
-        {mainTab === "ml-monitoring" && (
-          <MLMonitoringDashboard onBackToModels={() => setMainTab("ml-model")} />
-        )}
-
-        {mainTab === "performance" && (
-          <PerformanceTab
-            data={performanceData}
-            isLoading={isLoadingPerformance}
-            isRefreshing={isRefreshingPerformance}
-          />
-        )}
-
-        {mainTab === "admin" && (
-          <>
-            {!loggedIn ? (
-              <LoginPage
-                onLoginSuccess={() => {
-                  setLoggedIn(true);
-                  setAdminLoginMessage("");
-                }}
-                message={adminLoginMessage}
-              />
-            ) : role !== "admin" ? (
-              <div style={{ maxWidth: 520, margin: "40px auto", padding: 24 }}>
-                <div className="panel-card">
-                  <h2 style={{ marginBottom: 8 }}>Admin Access Required</h2>
-                  <p style={{ marginBottom: 0, opacity: 0.8 }}>
-                    You are signed in as <strong>{username}</strong> ({role}), but this section
-                    requires an admin account.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <AdminRoute
-                onExpired={() => {
-                  clearAuth();
-                  setLoggedIn(false);
-                  setMainTab("main");
-                  setAdminLoginMessage("Your session expired. Please log in again.");
-                }}
-              >
-                <AdminTab />
-              </AdminRoute>
-            )}
-          </>
-        )}
-          {mainTab === "prometheus" && (
-            <PrometheusTab
-              summary={prometheusSummary}
-              metrics={prometheusMetrics}
-              loading={isLoadingPrometheus}
-              error={prometheusError}
-              onRefresh={() => loadPrometheusSummary()}
+      {mainTab === "admin" && (
+        <>
+          {!loggedIn ? (
+            <LoginPage
+              onLoginSuccess={() => {
+                setLoggedIn(true);
+                setAdminLoginMessage("");
+              }}
+              message={adminLoginMessage}
             />
+          ) : role !== "admin" ? (
+            <div style={{ maxWidth: 520, margin: "40px auto", padding: 24 }}>
+              <div className="panel-card">
+                <h2 style={{ marginBottom: 8 }}>Admin Access Required</h2>
+                <p style={{ marginBottom: 0, opacity: 0.8 }}>
+                  You are signed in as <strong>{username}</strong> ({role}), but this section
+                  requires an admin account.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <AdminRoute
+              onExpired={() => {
+                clearAuth();
+                setLoggedIn(false);
+                setMainTab("main");
+                setAdminLoginMessage("Your session expired. Please log in again.");
+              }}
+            >
+              <AdminTab />
+            </AdminRoute>
           )}
+        </>
+      )}
+
+      {mainTab === "prometheus" && (
+        <PrometheusTab
+          summary={prometheusSummary}
+          metrics={prometheusMetrics}
+          loading={isLoadingPrometheus}
+          error={prometheusError}
+          onRefresh={() => loadPrometheusSummary()}
+        />
+      )}
     </div>
   );
 }

@@ -263,17 +263,19 @@ export default function MainDashboardTab({
           </article>
 
           <article className="main-summary-card">
-            <div className="main-summary-label">Telemetry Loading</div>
-            <div className="main-summary-value">{isLoadingTelemetry ? "Yes" : "No"}</div>
+            <div className="main-summary-label">Telemetry Status</div>
+            <div className="main-summary-value">
+              {isLoadingTelemetry ? "Loading" : "Ready"}
+            </div>
             <div className="main-summary-helper">Telemetry request state</div>
           </article>
 
           <article className="main-summary-card">
-            <div className="main-summary-label">Raw / FFT Loading</div>
+            <div className="main-summary-label">Raw / FFT Status</div>
             <div className="main-summary-value">
-              {isLoadingRaw || isLoadingFft ? "Yes" : "No"}
+              {isLoadingRaw || isLoadingFft ? "Loading" : "Ready"}
             </div>
-            <div className="main-summary-helper">Signal pipeline loading state</div>
+            <div className="main-summary-helper">Signal pipeline state</div>
           </article>
         </div>
       </section>

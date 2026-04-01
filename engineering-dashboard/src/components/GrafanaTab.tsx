@@ -439,7 +439,7 @@ function buildPanelUrl(
     params.set("var-device_label", selectedDevice.replace("sensor_", "Sensor "));
   }
 
-  if (panel.type === "sensor") {
+  if (panel.type === "sensor" && selectedSensor) {
     params.set("var-sensor", selectedSensor);
   }
 
