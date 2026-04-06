@@ -1,14 +1,14 @@
 import React from "react";
-import { isAdmin } from "./auth";
+import { Navigate } from "react-router-dom";
+import { isLoggedIn } from "./auth";
 
 type Props = {
   children: React.ReactNode;
-  onExpired?: () => void;
 };
 
-export default function AdminRoute({ children }: Props) {
-  if (!isAdmin()) {
-    return null;
+export default function ProtectedRoute({ children }: Props) {
+  if (!isLoggedIn()) {
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

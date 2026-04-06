@@ -68,7 +68,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "editorMode": "code",
@@ -128,7 +128,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "engineering_dashboard_simulator_running",
@@ -186,7 +186,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "engineering_dashboard_fault_mode_enabled",
@@ -249,7 +249,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "engineering_dashboard_telemetry_latest_age_seconds",
@@ -307,7 +307,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "engineering_dashboard_telemetry_total_rows",
@@ -365,7 +365,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "increase(engineering_dashboard_telemetry_writes_total[5m])",
@@ -423,7 +423,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "increase(engineering_dashboard_simulator_insert_failures_total[15m])",
@@ -481,7 +481,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "sum(increase(engineering_dashboard_fault_events_total[1h]))",
@@ -573,7 +573,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "sum(rate(engineering_dashboard_http_requests_total[5m]))",
@@ -666,7 +666,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "editorMode": "code",
@@ -761,7 +761,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "histogram_quantile(0.95, sum(rate(engineering_dashboard_http_request_duration_seconds_bucket[5m])) by (le))",
@@ -854,7 +854,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "sum(rate(engineering_dashboard_telemetry_query_duration_seconds_sum[5m])) by (query_type) / sum(rate(engineering_dashboard_telemetry_query_duration_seconds_count[5m])) by (query_type)",
@@ -947,7 +947,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "sum(rate(engineering_dashboard_http_requests_total[5m])) by (path)",
@@ -964,7 +964,46 @@
         "uid": "prometheus"
       },
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
         "overrides": []
       },
       "gridPos": {
@@ -996,7 +1035,7 @@
         "xTickLabelRotation": 0,
         "xTickLabelSpacing": 0
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "expr": "sum by (event_type) (increase(engineering_dashboard_fault_events_total[1h]))",
@@ -1010,7 +1049,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1067,7 +1106,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1088,7 +1127,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1136,7 +1175,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1144,7 +1183,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "count(up)",
+          "expr": "count(up >= 0)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1157,7 +1196,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1210,7 +1249,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1231,7 +1270,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1283,7 +1322,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1291,7 +1330,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "count(up == 0)",
+          "expr": "count(up{job!=\"prometheus\"} == 0)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1304,7 +1343,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1382,7 +1421,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1390,7 +1429,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "max by (job, instance) (scrape_duration_seconds)",
+          "expr": "max(scrape_duration_seconds)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1403,7 +1442,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1481,7 +1520,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1489,7 +1528,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "scrape_samples_post_metric_relabeling",
+          "expr": "sum(scrape_samples_scraped)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1502,7 +1541,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1580,7 +1619,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1588,7 +1627,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "max(up{job=\"engineering-dashboard-fastapi\"})",
+          "expr": "sum(up)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1601,7 +1640,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1649,7 +1688,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1657,7 +1696,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "prometheus_tsdb_head_series",
+          "expr": "max(prometheus_tsdb_head_series)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1670,7 +1709,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1748,7 +1787,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1769,48 +1808,15 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1835,19 +1841,23 @@
       },
       "id": 25,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1855,7 +1865,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "max(prometheus_rule_group_last_duration_seconds)",
+          "expr": "sum(rate(prometheus_http_requests_total[5m])) or vector(0)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1863,12 +1873,12 @@
         }
       ],
       "title": "Rule Evaluation Duration",
-      "type": "timeseries"
+      "type": "stat"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1946,7 +1956,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1967,7 +1977,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -2015,7 +2025,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -2023,7 +2033,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "prometheus_config_last_reload_successful",
+          "expr": "max(prometheus_config_last_reload_successful)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -2036,7 +2046,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -2085,7 +2095,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -2093,7 +2103,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "prometheus_config_last_reload_success_timestamp_seconds",
+          "expr": "max(prometheus_config_last_reload_success_timestamp_seconds)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -2123,6 +2133,6 @@
   "timezone": "browser",
   "title": "Engineering Dashboard - Prometheus Monitoring",
   "uid": "adxv56v",
-  "version": 21,
+  "version": 1,
   "weekStart": ""
 }

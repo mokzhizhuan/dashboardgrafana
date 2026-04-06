@@ -1,0 +1,256 @@
+.prometheus-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100%;
+  padding: 20px;
+  color: #0f172a;
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.06), transparent 28%),
+    linear-gradient(180deg, #f3f7fc 0%, #f8fbff 100%);
+  border-radius: 20px;
+}
+
+.prometheus-tab__hero,
+.prometheus-tab__selector-section,
+.prometheus-tab__panel-section {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #dde7f2;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.prometheus-tab__hero {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.prometheus-tab__hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 920px;
+}
+
+.prometheus-tab__eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+}
+
+.prometheus-tab__title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.08;
+  color: #0f172a;
+}
+
+.prometheus-tab__subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.prometheus-tab__meta {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.prometheus-tab__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.prometheus-tab__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  text-decoration: none;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.prometheus-tab__button:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+.prometheus-tab__button--primary {
+  color: #ffffff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.prometheus-tab__button--primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.prometheus-tab__selector-header,
+.prometheus-tab__panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.prometheus-tab__section-title {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.prometheus-tab__section-subtitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.prometheus-tab__chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.prometheus-tab__chip {
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.prometheus-tab__chip:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+.prometheus-tab__chip--active {
+  color: #ffffff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.prometheus-tab__panel-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.prometheus-tab__panel-link:hover {
+  text-decoration: underline;
+}
+
+.prometheus-tab__frame-shell {
+  overflow: hidden;
+  background: #0b1220;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+.prometheus-tab__frame {
+  width: 100%;
+  height: 700px;
+  border: 0;
+  background: #0b1220;
+}
+
+@media (max-width: 900px) {
+  .prometheus-tab {
+    padding: 14px;
+  }
+
+  .prometheus-tab__hero,
+  .prometheus-tab__selector-section,
+  .prometheus-tab__panel-section {
+    padding: 16px;
+  }
+
+  .prometheus-tab__title {
+    font-size: 26px;
+  }
+
+  .prometheus-tab__actions {
+    width: 100%;
+  }
+
+  .prometheus-tab__button {
+    width: 100%;
+  }
+
+  .prometheus-tab__frame {
+    height: 520px;
+  }
+}
+.prometheus-tab__group-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.prometheus-tab__group-chip {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  cursor: pointer;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.prometheus-tab__group-chip:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+.prometheus-tab__group-chip--active {
+  color: #ffffff;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}

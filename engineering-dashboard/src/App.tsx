@@ -4,14 +4,9 @@ import LoginPage from "./LoginPage";
 import AdminRoute from "./AdminRoute";
 import { clearAuth, getRole, getUsername, isLoggedIn } from "./auth";
 import MLMonitoringDashboard from "./components/mlmonitoring/MLMonitoringDashboard";
-import GrafanaTab from "./components/GrafanaTab";
 import MLModelTab from "./components/MLModelTab";
 import PerformanceTab from "./components/PerformanceTab";
 import MainDashboardTab from "./components/MainDashboardTab";
-import PrometheusTab, {
-  type PrometheusSummary,
-  type PrometheusMetricSample,
-} from "./components/PrometheusTab";
 import AdminTab from "./components/AdminTab";
 
 export type TelemetryItem = {
@@ -55,14 +50,18 @@ export type PerformanceSnapshot = {
 
 type MainTab =
   | "main"
-  | "grafana"
-  | "prometheus"
   | "ml-model"
   | "ml-monitoring"
   | "performance"
   | "admin";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+const GRAFANA_SENSOR_DASHBOARD_URL =
+  "http://localhost:4000/d/add6hwc/engineering-sensor-dashboard?orgId=1&from=now-2d&to=now&timezone=browser";
+
+const GRAFANA_PROMETHEUS_DASHBOARD_URL =
+  "http://localhost:4000/d/adxv56v/engineering-dashboard-prometheus-monitoring?orgId=1&from=now-1h&to=now&timezone=browser&refresh=5s";
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());
@@ -90,14 +89,7 @@ export default function App() {
   const [isLoadingFft, setIsLoadingFft] = useState(false);
   const [isRunningFft] = useState(false);
 
-  const [prometheusSummary, setPrometheusSummary] =
-    useState<PrometheusSummary | null>(null);
-  const [prometheusMetrics, setPrometheusMetrics] = useState<PrometheusMetricSample[]>([]);
-  const [isLoadingPrometheus, setIsLoadingPrometheus] = useState(false);
-  const [prometheusError, setPrometheusError] = useState<string | null>(null);
-
-  const [performanceData, setPerformanceData] =
-    useState<PerformanceSnapshot | null>(null);
+  const [performanceData, setPerformanceData] = useState<PerformanceSnapshot | null>(null);
   const [isLoadingPerformance, setIsLoadingPerformance] = useState(false);
   const [isRefreshingPerformance, setIsRefreshingPerformance] = useState(false);
 
@@ -106,30 +98,34 @@ export default function App() {
   const telemetryAbortRef = useRef<AbortController | null>(null);
   const rawAbortRef = useRef<AbortController | null>(null);
   const fftAbortRef = useRef<AbortController | null>(null);
+  const refreshingRef = useRef(false);
 
   const role = getRole();
   const username = getUsername();
+
+  const openGrafanaDashboard = useCallback((url: string, label: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+    setStatus(`${label} opened in Grafana`);
+  }, []);
 
   const setDeviceOptionsFromTelemetry = useCallback(
     (rows: TelemetryItem[], preferredDevice?: string) => {
       setDeviceName((prev) => {
         const current = preferredDevice ?? prev;
         if (current) return current;
-
-        const fallback = rows.find((row) => row.device_name)?.device_name ?? "";
-        return fallback;
+        return rows.find((row) => row.device_name)?.device_name ?? "";
       });
     },
     []
   );
 
   const syncSelectedSensor = useCallback((preferredSensor?: string) => {
-  setSensorName((prev) => preferredSensor ?? prev ?? "");
-}, []);
+    setSensorName((prev) => preferredSensor ?? prev ?? "");
+  }, []);
 
   const loadTelemetry = useCallback(
     async (selectedDevice?: string) => {
-      const device = selectedDevice ?? deviceName;
+      const device = selectedDevice ?? "";
 
       telemetryAbortRef.current?.abort();
       const controller = new AbortController();
@@ -152,7 +148,7 @@ export default function App() {
         const nextItems = Array.isArray(data) ? data : [];
 
         setItems(nextItems);
-        setDeviceOptionsFromTelemetry(nextItems, device);
+        setDeviceOptionsFromTelemetry(nextItems, device || undefined);
 
         return nextItems;
       } catch (error) {
@@ -168,7 +164,7 @@ export default function App() {
         setIsLoadingTelemetry(false);
       }
     },
-    [deviceName, setDeviceOptionsFromTelemetry]
+    [setDeviceOptionsFromTelemetry]
   );
 
   const loadMainDashboardOptions = useCallback(async () => {
@@ -201,12 +197,14 @@ export default function App() {
       );
     } catch (error) {
       console.error(error);
+      setTelemetryDeviceOptions([]);
+      setSensorOptions([]);
     }
   }, []);
 
- const loadRawSensorData = useCallback(
+  const loadRawSensorData = useCallback(
     async (selectedSensor?: string) => {
-      const sensor = selectedSensor ?? sensorName;
+      const sensor = selectedSensor ?? "";
 
       if (!sensor) {
         setRawItems([]);
@@ -233,7 +231,7 @@ export default function App() {
         const nextItems = Array.isArray(data) ? data : [];
 
         setRawItems(nextItems);
-        syncSelectedSensor(sensor);
+        syncSelectedSensor(sensor || undefined);
 
         return nextItems;
       } catch (error) {
@@ -248,91 +246,54 @@ export default function App() {
         setIsLoadingRaw(false);
       }
     },
-    [sensorName, syncSelectedSensor]
-  );
-  const loadFftSpectrum = useCallback(
-    async (selectedSensor?: string) => {
-      const sensor = selectedSensor ?? sensorName;
-
-      if (!sensor) {
-        setFftItems([]);
-        return [];
-      }
-
-      fftAbortRef.current?.abort();
-      const controller = new AbortController();
-      fftAbortRef.current = controller;
-
-      try {
-        setIsLoadingFft(true);
-
-        const res = await fetch(
-          `${API_BASE}/fft/spectrum?sensor_name=${encodeURIComponent(sensor)}`,
-          { signal: controller.signal }
-        );
-
-        if (!res.ok) {
-          throw new Error(`FFT request failed: ${res.status}`);
-        }
-
-        const data = await res.json();
-        const nextItems = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.items)
-          ? data.items
-          : [];
-
-        const trimmedItems = nextItems.slice(0, 300);
-        setFftItems(trimmedItems);
-
-        return trimmedItems;
-      } catch (error) {
-        if ((error as Error).name === "AbortError") return [];
-        console.error(error);
-        setFftItems([]);
-        return [];
-      } finally {
-        if (fftAbortRef.current === controller) {
-          fftAbortRef.current = null;
-        }
-        setIsLoadingFft(false);
-      }
-    },
-    [sensorName]
+    [syncSelectedSensor]
   );
 
-  const loadPrometheusSummary = useCallback(async () => {
+  const loadFftSpectrum = useCallback(async (selectedSensor?: string) => {
+    const sensor = selectedSensor ?? "";
+
+    if (!sensor) {
+      setFftItems([]);
+      return [];
+    }
+
+    fftAbortRef.current?.abort();
+    const controller = new AbortController();
+    fftAbortRef.current = controller;
+
     try {
-      setIsLoadingPrometheus(true);
-      setPrometheusError(null);
+      setIsLoadingFft(true);
 
-      const [summaryRes, metricsRes] = await Promise.all([
-        fetch(`${API_BASE}/prometheus/summary`),
-        fetch(`${API_BASE}/prometheus/metrics-data?limit=200`),
-      ]);
-
-      if (!summaryRes.ok) {
-        throw new Error(`Prometheus summary request failed: ${summaryRes.status}`);
-      }
-
-      const summaryData = await summaryRes.json();
-      setPrometheusSummary(summaryData);
-
-      if (metricsRes.ok) {
-        const metricsData = await metricsRes.json();
-        setPrometheusMetrics(Array.isArray(metricsData) ? metricsData : []);
-      } else {
-        setPrometheusMetrics([]);
-      }
-    } catch (error) {
-      console.error(error);
-      setPrometheusSummary(null);
-      setPrometheusMetrics([]);
-      setPrometheusError(
-        error instanceof Error ? error.message : "Failed to load Prometheus data"
+      const res = await fetch(
+        `${API_BASE}/fft/spectrum?sensor_name=${encodeURIComponent(sensor)}`,
+        { signal: controller.signal }
       );
+
+      if (!res.ok) {
+        throw new Error(`FFT request failed: ${res.status}`);
+      }
+
+      const data = await res.json();
+      const nextItems = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.items)
+        ? data.items
+        : [];
+
+      const trimmedItems = nextItems.slice(0, 300);
+      setFftItems(trimmedItems);
+
+      return trimmedItems;
+    } catch (error) {
+      if ((error as Error).name === "AbortError") return [];
+      console.error(error);
+      setFftItems([]);
+      return [];
     } finally {
-      setIsLoadingPrometheus(false);
+      if (fftAbortRef.current === controller) {
+        fftAbortRef.current = null;
+      }
+      setIsLoadingFft(false);
     }
   }, []);
 
@@ -427,6 +388,10 @@ export default function App() {
 
   const refreshActiveData = useCallback(
     async (isManual = false) => {
+      if (!loggedIn || refreshingRef.current) return;
+
+      refreshingRef.current = true;
+
       try {
         if (mainTab === "main") {
           setStatus("Loading main dashboard...");
@@ -447,17 +412,6 @@ export default function App() {
           return;
         }
 
-        if (mainTab === "grafana") {
-          if (!deviceName) {
-            await loadTelemetry();
-          }
-          if (!sensorOptions.length) {
-            await loadMainDashboardOptions();
-          }
-          setStatus("Grafana ready");
-          return;
-        }
-
         if (mainTab === "ml-model") {
           setStatus("Loading ML model data...");
 
@@ -466,7 +420,7 @@ export default function App() {
           }
 
           if (sensorName) {
-            await Promise.all([
+            await Promise.allSettled([
               loadRawSensorData(sensorName),
               loadFftSpectrum(sensorName),
             ]);
@@ -494,7 +448,7 @@ export default function App() {
           }
 
           if (sensorName) {
-            await Promise.all([
+            await Promise.allSettled([
               loadRawSensorData(sensorName),
               loadFftSpectrum(sensorName),
             ]);
@@ -508,13 +462,6 @@ export default function App() {
           return;
         }
 
-        if (mainTab === "prometheus") {
-          setStatus("Loading Prometheus monitoring...");
-          await loadPrometheusSummary();
-          setStatus("Prometheus monitoring ready");
-          return;
-        }
-
         if (mainTab === "admin") {
           setStatus("Admin workspace ready");
           return;
@@ -524,9 +471,12 @@ export default function App() {
       } catch (error) {
         console.error(error);
         setStatus("Failed to refresh active data");
+      } finally {
+        refreshingRef.current = false;
       }
     },
     [
+      loggedIn,
       mainTab,
       deviceName,
       sensorName,
@@ -535,27 +485,37 @@ export default function App() {
       loadMainDashboardOptions,
       loadRawSensorData,
       loadFftSpectrum,
-      loadPrometheusSummary,
       fetchPerformanceData,
     ]
   );
 
   useEffect(() => {
-    loadTelemetry();
-    loadMainDashboardOptions();
-  }, [loadTelemetry, loadMainDashboardOptions]);
+    if (!loggedIn) return;
+
+    void (async () => {
+      await loadMainDashboardOptions();
+      await loadTelemetry();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedIn]);
 
   useEffect(() => {
-    refreshActiveData(false);
-  }, [mainTab, refreshActiveData]);
+    if (!loggedIn) return;
+    void refreshActiveData(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mainTab, loggedIn]);
 
   useEffect(() => {
+    if (!loggedIn) return;
     if (mainTab !== "main") return;
     if (!deviceName) return;
-    loadTelemetry(deviceName);
-  }, [deviceName, mainTab, loadTelemetry]);
+
+    void loadTelemetry(deviceName);
+  }, [loggedIn, deviceName, mainTab, loadTelemetry]);
 
   useEffect(() => {
+    if (!loggedIn) return;
+
     if (
       mainTab !== "main" &&
       mainTab !== "ml-model" &&
@@ -570,11 +530,12 @@ export default function App() {
       return;
     }
 
-    loadRawSensorData(sensorName);
-    loadFftSpectrum(sensorName);
-  }, [sensorName, mainTab, loadRawSensorData, loadFftSpectrum]);
+    void loadRawSensorData(sensorName);
+    void loadFftSpectrum(sensorName);
+  }, [loggedIn, sensorName, mainTab, loadRawSensorData, loadFftSpectrum]);
 
   useEffect(() => {
+    if (!loggedIn) return;
     if (!autoRefreshEnabled) return;
 
     const interval = window.setInterval(async () => {
@@ -583,7 +544,7 @@ export default function App() {
     }, Math.max(5, autoRefreshSeconds) * 1000);
 
     return () => window.clearInterval(interval);
-  }, [autoRefreshEnabled, autoRefreshSeconds, refreshActiveData]);
+  }, [loggedIn, autoRefreshEnabled, autoRefreshSeconds, refreshActiveData]);
 
   useEffect(() => {
     return () => {
@@ -617,37 +578,61 @@ export default function App() {
     [deviceName, latestTelemetry, sensorName, latestRaw, fftItems.length]
   );
 
+  if (!loggedIn) {
+    return (
+      <div className="login-screen">
+        <div className="login-screen-inner">
+          <header className="hero-card login-hero-card">
+            <div className="login-hero-copy">
+              <p className="login-kicker">Engineering Monitoring Workspace</p>
+              <h1 className="hero-title login-hero-title">Winsys Monitoring Platform</h1>
+              <p className="hero-subtitle login-hero-subtitle">
+                Sign in to access the monitoring dashboard, Grafana analytics,
+                machine learning views, and system performance workspace.
+              </p>
+            </div>
+          </header>
+
+          <LoginPage
+            onLoginSuccess={() => {
+              setLoggedIn(true);
+              setAdminLoginMessage("");
+            }}
+            message={adminLoginMessage}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-shell">
       <header className="hero-card">
         <div>
-          <h1 className="hero-title">Main Grafana Monitoring Dashboard</h1>
+          <h1 className="hero-title">Winsys Monitoring Platform</h1>
           <p className="hero-subtitle">
             Database-driven monitoring platform for Grafana analytics, ML model
             insights, and system performance.
           </p>
 
-          {loggedIn && (
-            <p className="hero-subtitle" style={{ marginTop: 8 }}>
-              Signed in as <strong>{username}</strong> ({role})
-            </p>
-          )}
+          <p className="hero-subtitle" style={{ marginTop: 8 }}>
+            Signed in as <strong>{username}</strong> ({role})
+          </p>
         </div>
 
-        {loggedIn && (
-          <div style={{ marginTop: 16 }}>
-            <button
-              onClick={() => {
-                clearAuth();
-                setLoggedIn(false);
-                setMainTab("main");
-                setAdminLoginMessage("");
-              }}
-            >
-              Logout
-            </button>
-          </div>
-        )}
+        <div style={{ marginTop: 16 }}>
+          <button
+            onClick={() => {
+              clearAuth();
+              setLoggedIn(false);
+              setMainTab("main");
+              setAdminLoginMessage("");
+              setStatus("Ready");
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </header>
 
       <nav className="top-tabs">
@@ -659,10 +644,27 @@ export default function App() {
         </button>
 
         <button
-          className={`top-tab ${mainTab === "grafana" ? "active" : ""}`}
-          onClick={() => setMainTab("grafana")}
+          className="top-tab"
+          onClick={() =>
+            openGrafanaDashboard(
+              GRAFANA_SENSOR_DASHBOARD_URL,
+              "Monitoring dashboard"
+            )
+          }
         >
-          Grafana
+          Monitoring
+        </button>
+
+        <button
+          className="top-tab"
+          onClick={() =>
+            openGrafanaDashboard(
+              GRAFANA_PROMETHEUS_DASHBOARD_URL,
+              "Prometheus monitoring dashboard"
+            )
+          }
+        >
+          Metrics
         </button>
 
         <button
@@ -679,19 +681,14 @@ export default function App() {
           Performance
         </button>
 
-        <button
-          className={`top-tab ${mainTab === "admin" ? "active" : ""}`}
-          onClick={() => setMainTab("admin")}
-        >
-          Admin
-        </button>
-
-        <button
-          className={`top-tab ${mainTab === "prometheus" ? "active" : ""}`}
-          onClick={() => setMainTab("prometheus")}
-        >
-          Prometheus
-        </button>
+        {role === "admin" && (
+          <button
+            className={`top-tab ${mainTab === "admin" ? "active" : ""}`}
+            onClick={() => setMainTab("admin")}
+          >
+            Admin
+          </button>
+        )}
       </nav>
 
       {mainTab === "main" && (
@@ -723,10 +720,6 @@ export default function App() {
         />
       )}
 
-      {mainTab === "grafana" && (
-        <GrafanaTab selectedDevice={deviceName} selectedSensor={sensorName} />
-      )}
-
       {mainTab === "ml-model" && (
         <MLModelTab onOpenMonitoringDashboard={() => setMainTab("ml-monitoring")} />
       )}
@@ -743,50 +736,29 @@ export default function App() {
         />
       )}
 
-      {mainTab === "admin" && (
-        <>
-          {!loggedIn ? (
-            <LoginPage
-              onLoginSuccess={() => {
-                setLoggedIn(true);
-                setAdminLoginMessage("");
-              }}
-              message={adminLoginMessage}
-            />
-          ) : role !== "admin" ? (
-            <div style={{ maxWidth: 520, margin: "40px auto", padding: 24 }}>
-              <div className="panel-card">
-                <h2 style={{ marginBottom: 8 }}>Admin Access Required</h2>
-                <p style={{ marginBottom: 0, opacity: 0.8 }}>
-                  You are signed in as <strong>{username}</strong> ({role}), but this section
-                  requires an admin account.
-                </p>
-              </div>
+      {mainTab === "admin" &&
+        (role !== "admin" ? (
+          <div style={{ maxWidth: 520, margin: "40px auto", padding: 24 }}>
+            <div className="panel-card">
+              <h2 style={{ marginBottom: 8 }}>Admin Access Required</h2>
+              <p style={{ marginBottom: 0, opacity: 0.8 }}>
+                You are signed in as <strong>{username}</strong> ({role}), but this
+                section requires an admin account.
+              </p>
             </div>
-          ) : (
-            <AdminRoute
-              onExpired={() => {
-                clearAuth();
-                setLoggedIn(false);
-                setMainTab("main");
-                setAdminLoginMessage("Your session expired. Please log in again.");
-              }}
-            >
-              <AdminTab />
-            </AdminRoute>
-          )}
-        </>
-      )}
-
-      {mainTab === "prometheus" && (
-        <PrometheusTab
-          summary={prometheusSummary}
-          metrics={prometheusMetrics}
-          loading={isLoadingPrometheus}
-          error={prometheusError}
-          onRefresh={() => loadPrometheusSummary()}
-        />
-      )}
+          </div>
+        ) : (
+          <AdminRoute
+            onExpired={() => {
+              clearAuth();
+              setLoggedIn(false);
+              setMainTab("main");
+              setAdminLoginMessage("Your session expired. Please log in again.");
+            }}
+          >
+            <AdminTab />
+          </AdminRoute>
+        ))}
     </div>
   );
 }

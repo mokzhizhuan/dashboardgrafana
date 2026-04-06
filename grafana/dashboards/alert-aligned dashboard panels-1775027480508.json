@@ -41,7 +41,7 @@
         "content": "### Monitoring Summary\nThis dashboard aligns Grafana monitoring panels with Prometheus alert rules for backend availability, telemetry freshness, simulator behavior, and troubleshooting trends.",
         "mode": "markdown"
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "title": "Monitoring Summary",
       "type": "text"
     },
@@ -67,7 +67,7 @@
         "content": "### Service Health\nMain alert-aligned service monitoring panels for backend availability, app health, telemetry freshness, and simulator failure detection.",
         "mode": "markdown"
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "title": "Service Health",
       "type": "text"
     },
@@ -102,14 +102,14 @@
         },
         "viewMode": "list"
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "title": "Active Alerts",
       "type": "alertlist"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Prometheus scrape health for the FastAPI backend.\n1 = Up, 0 = Down.",
       "fieldConfig": {
@@ -173,7 +173,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -181,7 +181,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "up{job=\"engineering-dashboard-fastapi\"}",
+          "expr": "max(up{job=\"engineering-dashboard-fastapi\"})",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -194,7 +194,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Prometheus scrape health for the FastAPI backend.\n1 = Up, 0 = Down.",
       "fieldConfig": {
@@ -257,7 +257,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -265,7 +265,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "engineering_dashboard_app_up",
+          "expr": "max_over_time(engineering_dashboard_app_up[10m])",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -278,7 +278,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Freshness of latest telemetry data.\nWarning above 300s, critical above 600s.",
       "fieldConfig": {
@@ -332,7 +332,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -340,7 +340,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "time() - engineering_dashboard_latest_telemetry_timestamp_seconds",
+          "expr": "(time() - max_over_time(engineering_dashboard_latest_telemetry_timestamp_seconds[10m])) / 60",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -353,7 +353,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Mapped freshness state from telemetry age.\nHealthy < 300s, Warning 300–599s, Critical >= 600s.",
       "fieldConfig": {
@@ -407,7 +407,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -415,7 +415,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "increase(engineering_dashboard_simulator_insert_failures_total[10m])",
+          "expr": "max_over_time(engineering_dashboard_simulator_running[10m])",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -447,14 +447,14 @@
         "content": "### Current State\nLive status view of telemetry freshness state, latest telemetry timestamp, and simulator runtime condition.",
         "mode": "markdown"
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "title": "Current State",
       "type": "text"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Mapped freshness state from telemetry age.\nHealthy < 300s, Warning 300–599s, Critical >= 600s.",
       "fieldConfig": {
@@ -517,7 +517,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -525,7 +525,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "(time() - engineering_dashboard_latest_telemetry_timestamp_seconds) > bool 600",
+          "expr": "max_over_time(engineering_dashboard_simulator_running[10m])",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -538,7 +538,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Timestamp of the most recent telemetry record received by the backend.",
       "fieldConfig": {
@@ -588,7 +588,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -609,7 +609,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Indicates whether the simulator is currently running.",
       "fieldConfig": {
@@ -672,7 +672,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -680,7 +680,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "engineering_dashboard_simulator_running",
+          "expr": "max_over_time(engineering_dashboard_simulator_running[10m])",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -693,7 +693,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Indicates whether the simulator is paused.",
       "fieldConfig": {
@@ -756,7 +756,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -764,7 +764,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "engineering_dashboard_simulator_paused",
+          "expr": "max_over_time(engineering_dashboard_simulator_paused[10m])",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -795,14 +795,14 @@
         "content": "### Operational Counters\nInformational counters for telemetry storage, reads, writes, and CSV export activity. These panels are not alert indicators.",
         "mode": "markdown"
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "title": "Operational Counters",
       "type": "text"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Current number of rows stored in the telemetry table.",
       "fieldConfig": {
@@ -851,7 +851,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -859,7 +859,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "engineering_dashboard_telemetry_total_rows",
+          "expr": "max(engineering_dashboard_telemetry_total_rows)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -872,7 +872,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Total telemetry write operations recorded by the application.",
       "fieldConfig": {
@@ -921,7 +921,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -929,7 +929,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "engineering_dashboard_telemetry_writes_total",
+          "expr": "sum(engineering_dashboard_simulator_rows_inserted_total)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -942,7 +942,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Total telemetry read requests recorded by the application.",
       "fieldConfig": {
@@ -991,7 +991,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -999,7 +999,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "sum(engineering_dashboard_telemetry_reads_total)",
+          "expr": "sum(engineering_dashboard_telemetry_reads_total{device=\"all\"})",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1012,7 +1012,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Total CSV export requests recorded by the application.",
       "fieldConfig": {
@@ -1061,7 +1061,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1069,7 +1069,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "sum(engineering_dashboard_export_csv_total) or vector(0)",
+          "expr": "sum(engineering_dashboard_export_csv_total{device=\"all\"})",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1101,14 +1101,14 @@
         "content": "### Troubleshooting Trends\nTrend panels for diagnosing telemetry freshness drift, database operation failures, simulator insert behavior, and Prometheus scrape health.",
         "mode": "markdown"
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "title": "Troubleshooting Trends",
       "type": "text"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -1192,7 +1192,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1200,7 +1200,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "time() - engineering_dashboard_latest_telemetry_timestamp_seconds",
+          "expr": "(time() - max_over_time(engineering_dashboard_latest_telemetry_timestamp_seconds[5m])) / 60",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1213,34 +1213,13 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Database operation failure trend grouped by operation type.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "mode": "thresholds"
           },
           "mappings": [],
           "thresholds": {
@@ -1267,28 +1246,23 @@
       },
       "id": 14,
       "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
         "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1296,7 +1270,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "sum by (operation) (engineering_dashboard_db_operation_failures_total) or vector(0)",
+          "expr": "increase(engineering_dashboard_db_operation_failures_total[10m])",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1304,12 +1278,12 @@
         }
       ],
       "title": "DB Operation Failures",
-      "type": "barchart"
+      "type": "stat"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Recent simulator insert failure behavior over time.",
       "fieldConfig": {
@@ -1392,7 +1366,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1400,7 +1374,7 @@
             "uid": "bfgy2gr16sni8b"
           },
           "editorMode": "code",
-          "expr": "increase(engineering_dashboard_simulator_insert_failures_total[10m])",
+          "expr": "increase(engineering_dashboard_simulator_insert_failures_total[5m])",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1413,7 +1387,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfgy2gr16sni8b"
+        "uid": "prometheus"
       },
       "description": "Prometheus scrape health trend for the FastAPI metrics endpoint.",
       "fieldConfig": {
@@ -1487,7 +1461,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.4.0",
+      "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
@@ -1520,6 +1494,6 @@
   "timezone": "browser",
   "title": "alert-aligned dashboard panels",
   "uid": "ad8rz4s",
-  "version": 43,
+  "version": 1,
   "weekStart": ""
 }

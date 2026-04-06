@@ -40,7 +40,7 @@ from routes.ml_monitoring_perf_routes import router as ml_monitoring_perf_router
 from routes.performance_routes import router as performance_router
 from simulator import router as simulator_router
 from telemetry_test import router as telemetry_router
-
+#from routes.auth import router as auth_routers, init_auth_tables, seed_admin_if_missing
 
 app = FastAPI(title="Main Grafana Monitoring Dashboard API")
 
@@ -73,6 +73,8 @@ app.include_router(performance_router)
 app.include_router(telemetry_router)
 app.include_router(simulator_router)
 app.include_router(auth_router)
+#app.include_router(auth_routers)
+
 app.include_router(prometheus_router)
 
 SGT = timezone(timedelta(hours=8))

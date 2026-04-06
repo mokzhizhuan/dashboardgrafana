@@ -70,7 +70,7 @@ export default function MainDashboardTab({
       <section className="main-section">
         <div className="main-section-header">
           <div>
-            <h2 className="main-section-title">Main Dashboard Overview</h2>
+            <h2 className="main-section-title">Sensor Information</h2>
             <p className="main-section-subtitle">
               Lightweight summary view for telemetry, raw sensor values, and FFT snapshot data.
             </p>
@@ -118,7 +118,7 @@ export default function MainDashboardTab({
         <section className="main-section">
           <div className="main-section-header">
             <div>
-              <h2 className="main-section-title">Controls</h2>
+              <h2 className="main-section-title">Sensor Selection</h2>
               <p className="main-section-subtitle">
                 Configure active device, sensor source, and refresh behaviour.
               </p>
@@ -230,7 +230,7 @@ export default function MainDashboardTab({
       <section className="main-section">
         <div className="main-section-header">
           <div>
-            <h2 className="main-section-title">Quick Status</h2>
+            <h2 className="main-section-title">Sensor Devices</h2>
             <p className="main-section-subtitle">
               Fast operational summary for current frontend data state.
             </p>

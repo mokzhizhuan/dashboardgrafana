@@ -716,10 +716,6 @@ const guardedTruncateTelemetry = async () => {
           <div className="stat-card-value">{status?.rowsInserted ?? 0}</div>
         </div>
         <div className="stat-card admin-stat-card">
-          <div className="stat-card-label">Rows Skipped</div>
-          <div className="stat-card-value">{status?.rowsSkipped ?? 0}</div>
-        </div>
-        <div className="stat-card admin-stat-card">
           <div className="stat-card-label">Last Insert</div>
           <div className="stat-card-value">{formatDateTime(status?.lastInsertTime)}</div>
         </div>

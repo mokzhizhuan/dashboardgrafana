@@ -1,1 +1,2 @@
 CREATE DATABASE ml_test_db;
+CREATE DATABASE userinfo;

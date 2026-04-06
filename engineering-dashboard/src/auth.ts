@@ -28,33 +28,26 @@ export function clearAuth() {
   storage().removeItem(USERNAME_KEY);
 }
 
-export function getToken() {
+export function getToken(): string | null {
   return storage().getItem(TOKEN_KEY);
 }
 
-export function isLoggedIn() {
-  return !!getToken();
+export function isLoggedIn(): boolean {
+  const token = getToken();
+  return !!token;
 }
 
 export function getRole(): UserRole | null {
   const role = storage().getItem(ROLE_KEY);
-  if (role === "admin" || role === "viewer") return role;
-  return null;
+  return role === "admin" || role === "viewer" ? role : null;
 }
 
-export function getUsername() {
+export function getUsername(): string | null {
   return storage().getItem(USERNAME_KEY);
 }
 
-export function isAdmin() {
-  const token = getToken();
-  const role = getRole();
-
-  if (!token || role !== "admin") {
-    return false;
-  }
-
-  return true;
+export function isAdmin(): boolean {
+  return isLoggedIn() && getRole() === "admin";
 }
 
 export function getAuthUser() {

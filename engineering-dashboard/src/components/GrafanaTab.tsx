@@ -2,27 +2,18 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./grafana.css";
 
 type Props = {
-  selectedDevice: string;
   selectedSensor: string;
 };
 
 type PanelCategory =
-  | "telemetry"
   | "sensorOverview"
   | "sensorAnalytics"
   | "sensorTables";
 
-type PanelType = "telemetry" | "sensor";
+type PanelType =  "sensor";
 type PanelDataSource = "telemetry" | "sensor_fft" | "sensor_raw" | "mixed";
 
 type PanelKey =
-  | "telemetryDelay"
-  | "telemetryMessages"
-  | "deviceStatus"
-  | "messagesBySensor"
-  | "onlineStatusTable"
-  | "temperatureStat"
-  | "humidityStat"
   | "overallHealthScore"
   | "activeAnomalies"
   | "maxDelay"
@@ -65,7 +56,6 @@ const GRAFANA_BASE_URL =
   (import.meta.env.VITE_GRAFANA_URL || "http://localhost:4000").replace(/\/+$/, "");
 
 const CATEGORY_OPTIONS: { key: PanelCategory; label: string }[] = [
-  { key: "telemetry", label: "Telemetry" },
   { key: "sensorOverview", label: "Sensor Overview" },
   { key: "sensorAnalytics", label: "Sensor Analytics" },
   { key: "sensorTables", label: "Sensor Tables" },
@@ -73,96 +63,11 @@ const CATEGORY_OPTIONS: { key: PanelCategory; label: string }[] = [
 
 function getCategoryLabel(category: PanelCategory) {
   return (
-    CATEGORY_OPTIONS.find((item) => item.key === category)?.label ?? "Telemetry"
+    CATEGORY_OPTIONS.find((item) => item.key === category)?.label ?? "Sensor Overview"
   );
 }
 
 const PANEL_OPTIONS: PanelOption[] = [
-  {
-    key: "telemetryDelay",
-    category: "telemetry",
-    label: "Telemetry Delay",
-    title: "Telemetry Delay",
-    description: "Latest telemetry delay for the selected device.",
-    type: "telemetry",
-    dashboardUid: "ad8sdbg",
-    dashboardSlug: "engineering-telemetry-dashboard",
-    panelId: 1,
-    timeFrom: "now-24h",
-  },
-  {
-    key: "telemetryMessages",
-    category: "telemetry",
-    label: "Total Messages",
-    title: "Total Telemetry Messages",
-    description: "Total telemetry messages in the selected period.",
-    type: "telemetry",
-    dashboardUid: "ad8sdbg",
-    dashboardSlug: "engineering-telemetry-dashboard",
-    panelId: 2,
-    timeFrom: "now-24h",
-  },
-  {
-    key: "deviceStatus",
-    category: "telemetry",
-    label: "Device Status",
-    title: "Device Status",
-    description: "Current status of the selected device.",
-    type: "telemetry",
-    dashboardUid: "ad8sdbg",
-    dashboardSlug: "engineering-telemetry-dashboard",
-    panelId: 3,
-    timeFrom: "now-24h",
-  },
-  {
-    key: "messagesBySensor",
-    category: "telemetry",
-    label: "Messages by Sensor",
-    title: "Messages by Sensor",
-    description: "Telemetry message distribution by sensor.",
-    type: "telemetry",
-    dashboardUid: "ad8sdbg",
-    dashboardSlug: "engineering-telemetry-dashboard",
-    panelId: 4,
-    timeFrom: "now-24h",
-  },
-  {
-    key: "onlineStatusTable",
-    category: "telemetry",
-    label: "Online Status Table",
-    title: "Online Status Table",
-    description: "Current online/offline table for telemetry devices.",
-    type: "telemetry",
-    dashboardUid: "ad8sdbg",
-    dashboardSlug: "engineering-telemetry-dashboard",
-    panelId: 5,
-    timeFrom: "now-24h",
-  },
-  {
-    key: "temperatureStat",
-    category: "telemetry",
-    label: "Temperature",
-    title: "Temperature",
-    description: "Latest temperature stat for the selected device.",
-    type: "telemetry",
-    dashboardUid: "ad8sdbg",
-    dashboardSlug: "engineering-telemetry-dashboard",
-    panelId: 6,
-    timeFrom: "now-24h",
-  },
-  {
-    key: "humidityStat",
-    category: "telemetry",
-    label: "Humidity",
-    title: "Humidity",
-    description: "Latest humidity stat for the selected device.",
-    type: "telemetry",
-    dashboardUid: "ad8sdbg",
-    dashboardSlug: "engineering-telemetry-dashboard",
-    panelId: 7,
-    timeFrom: "now-24h",
-  },
-
   {
     key: "overallHealthScore",
     category: "sensorOverview",
@@ -172,7 +77,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 1,
+    panelId: 5,
     timeFrom: "now-2d",
   },
   {
@@ -184,7 +89,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 2,
+    panelId: 6,
     timeFrom: "now-2d",
   },
   {
@@ -196,7 +101,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 3,
+    panelId: 7,
     timeFrom: "now-2d",
   },
   {
@@ -208,7 +113,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 4,
+    panelId: 8,
     timeFrom: "now-2d",
   },
   {
@@ -220,7 +125,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 6,
+    panelId: 15,
     timeFrom: "now-2d",
   },
   {
@@ -232,7 +137,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 7,
+    panelId: 10,
     timeFrom: "now-2d",
   },
   {
@@ -244,7 +149,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 8,
+    panelId: 11,
     timeFrom: "now-2d",
   },
   {
@@ -256,7 +161,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 12,
+    panelId: 16,
     timeFrom: "now-2d",
   },
   {
@@ -268,7 +173,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 13,
+    panelId: 17,
     timeFrom: "now-2d",
   },
   {
@@ -280,7 +185,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 15,
+    panelId: 19,
     timeFrom: "now-2d",
   },
   {
@@ -292,10 +197,9 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 16,
+    panelId: 21,
     timeFrom: "now-2d",
   },
-
   {
     key: "temperatureTrend",
     category: "sensorAnalytics",
@@ -305,8 +209,8 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 9,
-    timeFrom: "now-6h",
+    panelId: 12,
+    timeFrom: "now-2d",
   },
   {
     key: "movingAverage",
@@ -317,8 +221,8 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 10,
-    timeFrom: "now-6h",
+    panelId: 13,
+    timeFrom: "now-2d",
   },
   {
     key: "fft",
@@ -329,7 +233,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 17,
+    panelId: 4,
     timeFrom: "now-1h",
     emptyHint: "Requires FFT spectrum rows for the selected sensor.",
   },
@@ -344,7 +248,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     dashboardSlug: "engineering-sensor-dashboard",
     panelId: 18,
     timeFrom: "now-15m",
-    emptyHint: "Requires raw signal rows in sensor_raw for the selected sensor and time range.",
+    emptyHint: "No dedicated raw signal panel exists in the current dashboard JSON. This mapping should be replaced after a real Raw Signal panel is added.",
   },
   {
     key: "tempHumidityScatter",
@@ -355,8 +259,8 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 19,
-    timeFrom: "now-6h",
+    panelId: 1,
+    timeFrom: "now-2d",
   },
   {
     key: "trajectory3d",
@@ -367,10 +271,9 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 20,
+    panelId: 2,
     timeFrom: "now-6h",
   },
-
   {
     key: "masterEngineeringTable",
     category: "sensorTables",
@@ -380,7 +283,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 5,
+    panelId: 9,
     timeFrom: "now-2d",
   },
   {
@@ -392,7 +295,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 11,
+    panelId: 14,
     timeFrom: "now-2d",
   },
   {
@@ -404,7 +307,7 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 14,
+    panelId: 18,
     timeFrom: "now-2d",
   },
   {
@@ -416,16 +319,12 @@ const PANEL_OPTIONS: PanelOption[] = [
     type: "sensor",
     dashboardUid: "add6hwc",
     dashboardSlug: "engineering-sensor-dashboard",
-    panelId: 21,
+    panelId: 20,
     timeFrom: "now-2d",
   },
 ];
 
-function buildPanelUrl(
-  panel: PanelOption,
-  selectedDevice: string,
-  selectedSensor: string
-) {
+function buildPanelUrl(panel: PanelOption, selectedSensor: string) {
   const params = new URLSearchParams({
     orgId: "1",
     panelId: String(panel.panelId),
@@ -434,23 +333,18 @@ function buildPanelUrl(
     timezone: "browser",
   });
 
-  if (panel.type === "telemetry") {
-    params.set("var-device", selectedDevice);
-    params.set("var-device_label", selectedDevice.replace("sensor_", "Sensor "));
-  }
-
-  if (panel.type === "sensor" && selectedSensor) {
+  if (selectedSensor) {
     params.set("var-sensor", selectedSensor);
   }
 
   return `${GRAFANA_BASE_URL}/d-solo/${panel.dashboardUid}/${panel.dashboardSlug}?${params.toString()}`;
 }
 
-export default function GrafanaTab({ selectedDevice, selectedSensor }: Props) {
+export default function GrafanaTab({ selectedSensor }: Props) {
   const [activeCategory, setActiveCategory] =
-    useState<PanelCategory>("telemetry");
+    useState<PanelCategory>("sensorOverview");
   const [activePanelKey, setActivePanelKey] =
-    useState<PanelKey>("telemetryDelay");
+    useState<PanelKey>("overallHealthScore");
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState<string | null>(null);
@@ -487,18 +381,35 @@ export default function GrafanaTab({ selectedDevice, selectedSensor }: Props) {
 
   const activeUrl = useMemo(() => {
     if (!activePanel) return "";
-    return buildPanelUrl(activePanel, selectedDevice, selectedSensor);
-  }, [activePanel, selectedDevice, selectedSensor]);
+    return buildPanelUrl(activePanel, selectedSensor);
+  }, [activePanel, selectedSensor]);
 
   useEffect(() => {
     if (!activeUrl) return;
     setIframeLoading(true);
     setIframeError(null);
   }, [activeUrl]);
+  function buildDashboardUrl(panel: PanelOption, selectedSensor: string) {
+  const params = new URLSearchParams({
+    orgId: "1",
+    from: panel.timeFrom,
+    to: panel.timeTo ?? "now",
+    timezone: "browser",
+  });
 
+  if (selectedSensor) {
+    params.set("var-sensor", selectedSensor);
+  }
+
+  return `${GRAFANA_BASE_URL}/d/${panel.dashboardUid}/${panel.dashboardSlug}?${params.toString()}`;
+}
+const fullDashboardUrl = useMemo(() => {
+  if (!activePanel) return "";
+  return buildDashboardUrl(activePanel, selectedSensor);
+}, [activePanel, selectedSensor]);
   const openGrafana = () => {
-    if (!activeUrl) return;
-    window.open(activeUrl, "_blank", "noopener,noreferrer");
+    if (!fullDashboardUrl) return;
+    window.open(fullDashboardUrl, "_blank", "noopener,noreferrer");
   };
 
   const refreshEmbed = () => {
@@ -513,6 +424,7 @@ export default function GrafanaTab({ selectedDevice, selectedSensor }: Props) {
     return null;
   }
 
+
   return (
     <div className="grafana-dashboard">
       <section className="grafana-section grafana-section--hero">
@@ -521,8 +433,7 @@ export default function GrafanaTab({ selectedDevice, selectedSensor }: Props) {
             <div>
               <h2 className="grafana-section-title">Grafana Monitoring</h2>
               <p className="grafana-section-subtitle">
-                Select one Grafana panel at a time for a larger, cleaner
-                monitoring view. The selected panel loads automatically.
+                Select one sensor dashboard panel at a time for a larger, cleaner monitoring view. Open Full Page will open the full Grafana sensor dashboard.
               </p>
             </div>
 
@@ -617,13 +528,13 @@ export default function GrafanaTab({ selectedDevice, selectedSensor }: Props) {
               <strong>Active Panel:</strong> {activePanel.label}
             </span>
             <span className="grafana-chip info">
-              <strong>Telemetry Device:</strong> {selectedDevice}
+              <strong>Dashboard:</strong> Engineering Sensor Dashboard
             </span>
             <span className="grafana-chip info">
               <strong>Sensor:</strong> {selectedSensor}
             </span>
             <span className="grafana-chip success">
-              <strong>Mode:</strong> Single Panel Auto Load
+              <strong>Mode:</strong> Sensor Panel View
             </span>
             <span className="grafana-chip">
               <strong>Data Source:</strong> {activePanel.dataSource ?? "mixed"}
@@ -663,7 +574,7 @@ export default function GrafanaTab({ selectedDevice, selectedSensor }: Props) {
             <iframe
               ref={iframeRef}
               id="grafana-panel-iframe"
-              key={`${activePanel.key}-${selectedDevice}-${selectedSensor}`}
+              key={`${activePanel.key}-${selectedSensor}`}
               src={activeUrl}
               className={`grafana-frame grafana-frame--hero ${
                 iframeLoading || iframeError ? "grafana-frame--hidden" : ""

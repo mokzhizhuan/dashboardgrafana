@@ -330,12 +330,18 @@ export default function PerformanceTab({
   }, [data]);
 
   useEffect(() => {
-    void loadPerformance();
+  const handleVisibilityChange = () => {
+    const visible = !document.hidden;
+    setIsDocumentVisible(visible);
 
-    return () => {
-      abortControllerRef.current?.abort();
-    };
-  }, [loadPerformance]);
+    if (visible) {
+      void loadPerformance();
+    }
+  };
+
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+}, [loadPerformance]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {

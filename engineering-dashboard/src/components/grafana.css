@@ -604,3 +604,32 @@
   font-size: 0.88rem;
   line-height: 1.5;
 }
+.grafana-frame-shell--dashboard {
+  min-height: calc(100vh - 180px);
+  height: calc(100vh - 180px);
+}
+
+.grafana-frame--dashboard {
+  width: 100%;
+  min-height: calc(100vh - 180px);
+  height: calc(100vh - 180px);
+  border: 0;
+  display: block;
+  background: #fff;
+}
+
+@media (max-width: 1024px) {
+  .grafana-frame-shell--dashboard,
+  .grafana-frame--dashboard {
+    min-height: calc(100vh - 160px);
+    height: calc(100vh - 160px);
+  }
+}
+
+@media (max-width: 768px) {
+  .grafana-frame-shell--dashboard,
+  .grafana-frame--dashboard {
+    min-height: 80vh;
+    height: 80vh;
+  }
+}
