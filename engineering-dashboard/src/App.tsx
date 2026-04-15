@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
-import LoginPage from "./LoginPage";
 import AdminRoute from "./AdminRoute";
-import { clearAuth, getRole, getUsername, isLoggedIn } from "./auth";
+import { isLoggedIn, isAdmin, isViewer, getUsername } from "./auth";
 import MLMonitoringDashboard from "./components/mlmonitoring/MLMonitoringDashboard";
 import MLModelTab from "./components/MLModelTab";
 import PerformanceTab from "./components/PerformanceTab";
 import MainDashboardTab from "./components/MainDashboardTab";
 import AdminTab from "./components/AdminTab";
+import keycloak from "./keycloak";
 
 export type TelemetryItem = {
   time: string;
@@ -55,7 +55,16 @@ type MainTab =
   | "performance"
   | "admin";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+/*
+  Split backend bases:
+  - Django for working telemetry/options endpoints
+  - FastAPI kept for FFT endpoints for now
+*/
+const DJANGO_API_BASE =
+  import.meta.env.VITE_DJANGO_API_BASE_URL || "http://localhost:8001";
+
+const FASTAPI_API_BASE =
+  import.meta.env.VITE_FASTAPI_API_BASE_URL || "http://localhost:8000";
 
 const GRAFANA_SENSOR_DASHBOARD_URL =
   "http://localhost:4000/d/add6hwc/engineering-sensor-dashboard?orgId=1&from=now-2d&to=now&timezone=browser";
@@ -64,7 +73,13 @@ const GRAFANA_PROMETHEUS_DASHBOARD_URL =
   "http://localhost:4000/d/adxv56v/engineering-dashboard-prometheus-monitoring?orgId=1&from=now-1h&to=now&timezone=browser&refresh=5s";
 
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(isLoggedIn());
+  const loggedIn = isLoggedIn();
+
+  const username = getUsername() || "Unknown";
+  const admin = isAdmin();
+  const viewer = isViewer();
+  const role = admin ? "admin" : viewer ? "viewer" : "user";
+ 
   const [mainTab, setMainTab] = useState<MainTab>("main");
   const [showOverview, setShowOverview] = useState(true);
   const [showControls, setShowControls] = useState(true);
@@ -93,16 +108,30 @@ export default function App() {
   const [isLoadingPerformance, setIsLoadingPerformance] = useState(false);
   const [isRefreshingPerformance, setIsRefreshingPerformance] = useState(false);
 
-  const [adminLoginMessage, setAdminLoginMessage] = useState("");
-
   const telemetryAbortRef = useRef<AbortController | null>(null);
   const rawAbortRef = useRef<AbortController | null>(null);
   const fftAbortRef = useRef<AbortController | null>(null);
   const refreshingRef = useRef(false);
+  useEffect(() => {
+    if (mainTab === "admin" && !admin) {
+      setMainTab("main");
+    }
+  }, [mainTab, admin]);
+  async function authFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  await keycloak.updateToken(30);
+    
+  if (!keycloak.token) {
+    throw new Error("Missing Keycloak token");
+  }
 
-  const role = getRole();
-  const username = getUsername();
+  const headers = new Headers(init.headers || {});
+  headers.set("Authorization", `Bearer ${keycloak.token}`);
 
+  return fetch(input, {
+    ...init,
+    headers,
+  });
+}
   const openGrafanaDashboard = useCallback((url: string, label: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
     setStatus(`${label} opened in Grafana`);
@@ -125,7 +154,8 @@ export default function App() {
 
   const loadTelemetry = useCallback(
     async (selectedDevice?: string) => {
-      const device = selectedDevice ?? "";
+      const device =
+        selectedDevice && selectedDevice !== "all" ? selectedDevice : "";
 
       telemetryAbortRef.current?.abort();
       const controller = new AbortController();
@@ -135,10 +165,10 @@ export default function App() {
         setIsLoadingTelemetry(true);
 
         const url = device
-          ? `${API_BASE}/telemetry?device=${encodeURIComponent(device)}`
-          : `${API_BASE}/telemetry`;
+          ? `${DJANGO_API_BASE}/telemetry/?device=${encodeURIComponent(device)}`
+          : `${DJANGO_API_BASE}/telemetry/`;
 
-        const res = await fetch(url, { signal: controller.signal });
+        const res = await authFetch(url, { signal: controller.signal });
 
         if (!res.ok) {
           throw new Error(`Telemetry request failed: ${res.status}`);
@@ -169,7 +199,7 @@ export default function App() {
 
   const loadMainDashboardOptions = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/main-dashboard/options`);
+      const res = await authFetch(`${DJANGO_API_BASE}/main-dashboard/options/`)
 
       if (!res.ok) {
         throw new Error(`Main dashboard options request failed: ${res.status}`);
@@ -177,23 +207,34 @@ export default function App() {
 
       const data = await res.json();
 
-      const nextTelemetryOptions = Array.isArray(data?.telemetry_devices)
+      const dbTelemetryOptions = Array.isArray(data?.telemetry_devices)
         ? data.telemetry_devices
         : [];
 
-      const nextSensorOptions = Array.isArray(data?.sensors)
+      const dbSensorOptions = Array.isArray(data?.sensors)
         ? data.sensors
         : [];
+
+      const nextTelemetryOptions = ["all", ...dbTelemetryOptions.filter((v) => v && v !== "all")];
+      const nextSensorOptions = ["all", ...dbSensorOptions.filter((v) => v && v !== "all")];
 
       setTelemetryDeviceOptions(nextTelemetryOptions);
       setSensorOptions(nextSensorOptions);
 
+      const nextDefaultDevice = nextTelemetryOptions.includes("all")
+        ? "all"
+        : nextTelemetryOptions[0] ?? "";
+
+      const nextDefaultSensor = nextSensorOptions.includes("all")
+        ? "all"
+        : nextSensorOptions[0] ?? "";
+
       setDeviceName((prev) =>
-        nextTelemetryOptions.includes(prev) ? prev : nextTelemetryOptions[0] ?? ""
+        nextTelemetryOptions.includes(prev) ? prev : nextDefaultDevice
       );
 
       setSensorName((prev) =>
-        nextSensorOptions.includes(prev) ? prev : nextSensorOptions[0] ?? ""
+        nextSensorOptions.includes(prev) ? prev : nextDefaultSensor
       );
     } catch (error) {
       console.error(error);
@@ -204,7 +245,8 @@ export default function App() {
 
   const loadRawSensorData = useCallback(
     async (selectedSensor?: string) => {
-      const sensor = selectedSensor ?? "";
+      const sensor =
+        selectedSensor && selectedSensor !== "all" ? selectedSensor : "";
 
       if (!sensor) {
         setRawItems([]);
@@ -218,8 +260,8 @@ export default function App() {
       try {
         setIsLoadingRaw(true);
 
-        const res = await fetch(
-          `${API_BASE}/fft/raw?sensor_name=${encodeURIComponent(sensor)}&limit=50`,
+        const res = await authFetch(
+          `${FASTAPI_API_BASE}/fft/raw?sensor_name=${encodeURIComponent(sensor)}&limit=50`,
           { signal: controller.signal }
         );
 
@@ -250,7 +292,8 @@ export default function App() {
   );
 
   const loadFftSpectrum = useCallback(async (selectedSensor?: string) => {
-    const sensor = selectedSensor ?? "";
+    const sensor =
+      selectedSensor && selectedSensor !== "all" ? selectedSensor : "";
 
     if (!sensor) {
       setFftItems([]);
@@ -264,8 +307,8 @@ export default function App() {
     try {
       setIsLoadingFft(true);
 
-      const res = await fetch(
-        `${API_BASE}/fft/spectrum?sensor_name=${encodeURIComponent(sensor)}`,
+      const res = await authFetch(
+        `${FASTAPI_API_BASE}/fft/spectrum?sensor_name=${encodeURIComponent(sensor)}`,
         { signal: controller.signal }
       );
 
@@ -556,7 +599,6 @@ export default function App() {
 
   const latestTelemetry = items[0] ?? null;
   const latestRaw = rawItems[0] ?? null;
-
   const overviewCards = useMemo(
     () => [
       { label: "Selected Device", value: deviceName || "--" },
@@ -579,31 +621,22 @@ export default function App() {
   );
 
   if (!loggedIn) {
-    return (
-      <div className="login-screen">
-        <div className="login-screen-inner">
-          <header className="hero-card login-hero-card">
-            <div className="login-hero-copy">
-              <p className="login-kicker">Engineering Monitoring Workspace</p>
-              <h1 className="hero-title login-hero-title">Winsys Monitoring Platform</h1>
-              <p className="hero-subtitle login-hero-subtitle">
-                Sign in to access the monitoring dashboard, Grafana analytics,
-                machine learning views, and system performance workspace.
-              </p>
-            </div>
-          </header>
-
-          <LoginPage
-            onLoginSuccess={() => {
-              setLoggedIn(true);
-              setAdminLoginMessage("");
-            }}
-            message={adminLoginMessage}
-          />
-        </div>
+  return (
+    <div className="login-screen">
+      <div className="login-screen-inner">
+        <header className="hero-card login-hero-card">
+          <div className="login-hero-copy">
+            <p className="login-kicker">Engineering Monitoring Workspace</p>
+            <h1 className="hero-title login-hero-title">Winsys Monitoring Platform</h1>
+            <p className="hero-subtitle login-hero-subtitle">
+              Redirecting to secure login...
+            </p>
+          </div>
+        </header>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="dashboard-shell">
@@ -623,11 +656,9 @@ export default function App() {
         <div style={{ marginTop: 16 }}>
           <button
             onClick={() => {
-              clearAuth();
-              setLoggedIn(false);
-              setMainTab("main");
-              setAdminLoginMessage("");
-              setStatus("Ready");
+              keycloak.logout({
+                redirectUri: window.location.origin,
+              });
             }}
           >
             Logout
@@ -681,7 +712,7 @@ export default function App() {
           Performance
         </button>
 
-        {role === "admin" && (
+        {admin && (
           <button
             className={`top-tab ${mainTab === "admin" ? "active" : ""}`}
             onClick={() => setMainTab("admin")}
@@ -737,7 +768,9 @@ export default function App() {
       )}
 
       {mainTab === "admin" &&
-        (role !== "admin" ? (
+        (admin ? (
+          <AdminTab />
+        ) : (
           <div style={{ maxWidth: 520, margin: "40px auto", padding: 24 }}>
             <div className="panel-card">
               <h2 style={{ marginBottom: 8 }}>Admin Access Required</h2>
@@ -747,17 +780,6 @@ export default function App() {
               </p>
             </div>
           </div>
-        ) : (
-          <AdminRoute
-            onExpired={() => {
-              clearAuth();
-              setLoggedIn(false);
-              setMainTab("main");
-              setAdminLoginMessage("Your session expired. Please log in again.");
-            }}
-          >
-            <AdminTab />
-          </AdminRoute>
         ))}
     </div>
   );

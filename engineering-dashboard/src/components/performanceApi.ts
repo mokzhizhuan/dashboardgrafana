@@ -33,7 +33,7 @@ type FetchPerformanceSnapshotOptions = {
 };
 
 const API_BASE =
-  (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
+  (import.meta.env.VITE_FASTAPI_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
 function normalizeText(value: unknown, fallback = ""): string {
   if (typeof value !== "string") return fallback;

@@ -1,7 +1,8 @@
 import type { SimulatorStatus } from "./AdminTypes";
-import { authHeaders, clearAuth } from "../../auth";
+import keycloak from "../../keycloak";
 
 const rawBase =
+  import.meta.env.VITE_FASTAPI_API_BASE_URL ||
   import.meta.env.VITE_ADMIN_API_BASE ||
   import.meta.env.VITE_API_BASE_URL ||
   "http://localhost:8000";
@@ -13,8 +14,22 @@ function buildUrl(path: string) {
   return `${ADMIN_API_BASE}${normalizedPath}`;
 }
 
+async function getAuthHeaders(extra?: HeadersInit): Promise<Headers> {
+  await keycloak.updateToken(30);
+
+  if (!keycloak.token) {
+    throw new Error("Missing Keycloak token");
+  }
+
+  const headers = new Headers(extra || {});
+  headers.set("Authorization", `Bearer ${keycloak.token}`);
+  return headers;
+}
+
 function handleUnauthorized() {
-  clearAuth();
+  keycloak.logout({
+    redirectUri: window.location.origin,
+  });
 }
 
 async function ensureOk(res: Response) {
@@ -31,34 +46,37 @@ async function ensureOk(res: Response) {
   return res;
 }
 
-export async function fetchAdminJson<T = any>(
-  path: string,
-  init?: RequestInit,
-): Promise<T> {
-  const res = await fetchAdminWithAuth(path, {
-    ...init,
-    headers: {
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...(init?.headers || {}),
-    },
-  });
-
-  return res.json();
-}
-
 export async function fetchAdminWithAuth(
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
+  const headers = await getAuthHeaders(init?.headers);
+
   const res = await fetch(buildUrl(path), {
     ...init,
-    headers: {
-      ...authHeaders(),
-      ...(init?.headers || {}),
-    },
+    headers,
   });
 
   return ensureOk(res);
+}
+
+export async function fetchAdminJson<T = any>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+  const headers = await getAuthHeaders(init?.headers);
+
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const res = await fetch(buildUrl(path), {
+    ...init,
+    headers,
+  });
+
+  await ensureOk(res);
+  return res.json();
 }
 
 export function normalizeStatus(raw: any): SimulatorStatus {
@@ -99,17 +117,15 @@ export function normalizeStatus(raw: any): SimulatorStatus {
 }
 
 export async function readSimulatorStatus(): Promise<SimulatorStatus> {
-  const res = await fetchAdminWithAuth("/simulator/status");
-  const data = await res.json();
+  const data = await fetchAdminJson("/simulator/status");
   return normalizeStatus(data);
 }
 
 export async function readSimulatorDevices(): Promise<string[]> {
-  const res = await fetchAdminWithAuth("/simulator/devices");
-  const data = await res.json();
+  const data = await fetchAdminJson("/simulator/devices");
 
   if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.devices)) return data.devices;
+  if (Array.isArray((data as any)?.devices)) return (data as any).devices;
 
   return [];
 }
@@ -118,44 +134,37 @@ export async function postAdminAction<T = any>(
   path: string,
   body?: Record<string, unknown>,
 ): Promise<T> {
-  const res = await fetchAdminWithAuth(path, {
+  return fetchAdminJson(path, {
     method: "POST",
     body: body ? JSON.stringify(body) : undefined,
     headers: {
       "Content-Type": "application/json",
     },
   });
-
-  return res.json();
 }
 
 export async function getTelemetryRowCount(): Promise<number> {
-  const res = await fetchAdminWithAuth("/telemetry/count");
-  const data = await res.json();
-  return Number(data?.count ?? 0);
+  const data = await fetchAdminJson("/simulator/admin/data/telemetry/count");
+  return Number((data as any)?.count ?? 0);
 }
 
 export async function truncateTelemetry(): Promise<{ deletedCount?: number; message?: string }> {
-  const res = await fetchAdminWithAuth("/telemetry/truncate", {
+  return fetchAdminJson("/simulator/admin/data/telemetry/truncate", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
   });
-
-  return res.json();
 }
 
 export async function deleteTelemetryRows(
   ids: number[],
 ): Promise<{ deletedCount?: number; message?: string }> {
-  const res = await fetchAdminWithAuth("/telemetry/delete", {
-    method: "POST",
+  return fetchAdminJson("/simulator/admin/data/telemetry/rows", {
+    method: "DELETE",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ ids }),
   });
-
-  return res.json();
 }

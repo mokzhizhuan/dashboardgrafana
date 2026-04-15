@@ -1,0 +1,7 @@
+Django==5.2.7
+djangorestframework==3.16.1
+psycopg2-binary==2.9.11
+django-cors-headers==4.7.0
+bcrypt==4.0.1
+PyJWT==2.12.1
+cryptography==41.0.3

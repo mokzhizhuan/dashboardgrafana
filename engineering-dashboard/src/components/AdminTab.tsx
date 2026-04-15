@@ -2,7 +2,6 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import "./Admin.css";
 import { useAdminSimulator } from "./admin/useAdminSimulator";
-import { isAdmin } from "../auth";
 import SimulatorControlsPanel from "./admin/SimulatorControlsPanel";
 import InjectionPanel from "./admin/InjectionPanel";
 import LegacyPanel from "./admin/LegacyPanel";

@@ -1,2 +1,2 @@
 CREATE DATABASE ml_test_db;
-CREATE DATABASE userinfo;
+CREATE DATABASE auth_db;

@@ -1,0 +1,26 @@
+{
+  "telemetry_devices": [
+    "sensor_01",
+    "sensor_02",
+    "sensor_03",
+    "sensor_04",
+    "sensor_05",
+    "sensor_06",
+    "sensor_07",
+    "sensor_08",
+    "sensor_09",
+    "sensor_10"
+  ],
+  "sensors": [
+    "vibration_1",
+    "vibration_2",
+    "vibration_3",
+    "vibration_4",
+    "vibration_5",
+    "vibration_6",
+    "vibration_7",
+    "vibration_8",
+    "vibration_9",
+    "vibration_10"
+  ]
+}

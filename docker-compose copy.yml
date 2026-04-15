@@ -1,0 +1,149 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: engineering_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+      - ./postgres/seed:/seed
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: engineering_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      ML_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/ml_test_db
+      PROMETHEUS_METRICS_PATH: /prometheus/metrics
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT}:8000"
+    volumes:
+      - ./backend:/app
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  frontend:
+    build:
+      context: ./engineering-dashboard
+      dockerfile: Dockerfile.dev
+    container_name: engineering_frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT}:5173"
+    volumes:
+      - ./engineering-dashboard:/app
+      - /app/node_modules
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+  django_backend:
+    build:
+      context: ./django_backend
+      dockerfile: Dockerfile
+    container_name: django_backend
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./django_backend:/app
+    environment:
+      DB_NAME: auth_db
+      DB_USER: postgres
+      DB_PASSWORD: 126523
+      DB_HOST: postgres
+      DB_PORT: 5432
+    depends_on:
+      - postgres
+    command: python manage.py runserver 0.0.0.0:8001
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: engineering_prometheus
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: engineering_grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SERVER_HTTP_PORT: 3000
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_INSTALL_PLUGINS: volkovlabs-echarts-panel 6.6.0
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.0
+    container_name: engineering_keycloak
+    restart: unless-stopped
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin123
+
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/auth_db
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: 126523
+
+      KC_HOSTNAME: http://auth.dashboard.local.com:8080
+      KC_HOSTNAME_ADMIN: http://admin-auth.dashboard.local.com:8080
+      KC_HTTP_ENABLED: "true"
+
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    command:
+      [
+        "start-dev",
+        "--spi-theme--static-max-age=-1",
+        "--spi-theme--cache-themes=false",
+        "--spi-theme--cache-templates=false"
+      ]
+    volumes:
+      - ./keycloak-themes:/opt/keycloak/themes
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+  keycloak_themes:

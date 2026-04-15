@@ -1,64 +1,34 @@
-// src/auth.ts
-export type UserRole = "admin" | "viewer";
+import keycloak from "./keycloak";
 
-export type LoginResponse = {
-  access_token: string;
-  token_type: string;
-  role: UserRole;
-  username: string;
-};
-
-const TOKEN_KEY = "app_token";
-const ROLE_KEY = "app_role";
-const USERNAME_KEY = "app_username";
-
-function storage() {
-  return sessionStorage;
+export function isLoggedIn() {
+  return !!keycloak.authenticated;
 }
 
-export function saveAuth(data: LoginResponse) {
-  storage().setItem(TOKEN_KEY, data.access_token);
-  storage().setItem(ROLE_KEY, data.role);
-  storage().setItem(USERNAME_KEY, data.username);
+export function getUsername() {
+  return (
+    keycloak.tokenParsed?.preferred_username ||
+    keycloak.tokenParsed?.email ||
+    ""
+  );
 }
 
-export function clearAuth() {
-  storage().removeItem(TOKEN_KEY);
-  storage().removeItem(ROLE_KEY);
-  storage().removeItem(USERNAME_KEY);
+export function getRoles(): string[] {
+  const realmRoles = keycloak.tokenParsed?.realm_access?.roles ?? [];
+  const clientRoles =
+    keycloak.tokenParsed?.resource_access?.["engineering-dashboard"]?.roles ?? [];
+
+  return Array.from(new Set([...realmRoles, ...clientRoles]));
 }
 
-export function getToken(): string | null {
-  return storage().getItem(TOKEN_KEY);
+export function isAdmin() {
+  return getRoles().includes("admin");
 }
 
-export function isLoggedIn(): boolean {
-  const token = getToken();
-  return !!token;
+export function isViewer() {
+  const roles = getRoles();
+  return roles.includes("viewer") || roles.includes("admin");
 }
 
-export function getRole(): UserRole | null {
-  const role = storage().getItem(ROLE_KEY);
-  return role === "admin" || role === "viewer" ? role : null;
-}
-
-export function getUsername(): string | null {
-  return storage().getItem(USERNAME_KEY);
-}
-
-export function isAdmin(): boolean {
-  return isLoggedIn() && getRole() === "admin";
-}
-
-export function getAuthUser() {
-  return {
-    token: getToken(),
-    role: getRole(),
-    username: getUsername(),
-  };
-}
-
-export function authHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+export async function logout() {
+  await keycloak.logout();
 }

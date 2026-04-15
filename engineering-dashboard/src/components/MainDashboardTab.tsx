@@ -64,6 +64,7 @@ export default function MainDashboardTab({
   const hasSensorOptions = sensorOptions.length > 0;
   const memoCards = useMemo(() => overviewCards, [overviewCards]);
   const hasOverviewCards = memoCards.length > 0;
+  
 
   return (
      <div className={`main-dashboard ${isBusy ? "loading" : ""}`} style={{ position: "relative" }}>
@@ -143,7 +144,7 @@ export default function MainDashboardTab({
                     ) : (
                       telemetryDeviceOptions.map((option) => (
                         <option key={option} value={option}>
-                          {option}
+                          {option === "all" ? "All Telemetry Devices" : option}
                         </option>
                       ))
                     )}
@@ -163,7 +164,7 @@ export default function MainDashboardTab({
                     ) : (
                       sensorOptions.map((option) => (
                         <option key={option} value={option}>
-                          {option}
+                          {option === "all" ? "All Sensors" : option}
                         </option>
                       ))
                     )}

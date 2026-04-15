@@ -529,7 +529,7 @@ export default function PerformanceTab({
         >
           <div className="section-header-row">
             <div>
-              <h2 className="section-title">Performance</h2>
+              <h2 className="section-title">System Performance</h2>
               <p className="section-subtitle">
                 Operational status of frontend actions, refresh flow, and data loading state.
               </p>

@@ -1,4 +1,4 @@
-\connect userinfo;
+\c auth_db;
 
 CREATE TABLE IF NOT EXISTS userinfo (
     id SERIAL PRIMARY KEY,
